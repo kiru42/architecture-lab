@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend/${BACKEND:-01-layered-ntier}
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow
+      JWT_SECRET: dev-secret-change-in-production
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/${BACKEND:-01-layered-ntier}:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend/${FRONTEND:-01-component-layered}
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/${FRONTEND:-01-component-layered}:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
