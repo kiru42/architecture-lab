@@ -54,6 +54,7 @@ model Task {
   assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
   comments Comment[]
+  taskTags TaskTag[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -73,4 +74,22 @@ model Comment {
 
   @@index([taskId])
   @@index([authorId])
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  taskTags  TaskTag[]
+}
+
+model TaskTag {
+  taskId String
+  tagId  String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([taskId])
+  @@index([tagId])
 }
