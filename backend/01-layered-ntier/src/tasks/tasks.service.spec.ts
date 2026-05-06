@@ -115,6 +115,8 @@ describe('TasksService', () => {
           title: createDto.title,
           description: createDto.description,
           projectId,
+          assigneeId: undefined,
+          dueDate: null,
         },
       });
       expect(result).toEqual(createdTask);
