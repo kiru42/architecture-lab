@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TasksService } from './tasks.service';
 import { PrismaService } from '../database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 describe('TasksService', () => {
   let service: TasksService;
   let prisma: PrismaService;
   let projectsService: ProjectsService;
+  let notificationsGateway: NotificationsGateway;
 
   const mockPrismaService = {
     task: {
@@ -16,10 +18,17 @@ describe('TasksService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
   };
 
   const mockProjectsService = {
     getProjectById: jest.fn(),
+  };
+
+  const mockNotificationsGateway = {
+    notifyTaskAssigned: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -28,12 +37,14 @@ describe('TasksService', () => {
         TasksService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ProjectsService, useValue: mockProjectsService },
+        { provide: NotificationsGateway, useValue: mockNotificationsGateway },
       ],
     }).compile();
 
     service = module.get<TasksService>(TasksService);
     prisma = module.get<PrismaService>(PrismaService);
     projectsService = module.get<ProjectsService>(ProjectsService);
+    notificationsGateway = module.get<NotificationsGateway>(NotificationsGateway);
   });
 
   afterEach(() => {

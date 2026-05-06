@@ -5,7 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
-import { NotificationsGateway } from './notifications/notifications.gateway';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { NotificationsGateway } from './notifications/notifications.gateway';
     ProjectsModule,
     TasksModule,
     CommentsModule,
+    NotificationsModule,
   ],
-  providers: [NotificationsGateway],
 })
 export class AppModule {}
