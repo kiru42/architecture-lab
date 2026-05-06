@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
 import { Task } from '@prisma/client';
 
@@ -9,6 +10,7 @@ export class TasksService {
   constructor(
     private prisma: PrismaService,
     private projectsService: ProjectsService,
+    private notificationsGateway: NotificationsGateway,
   ) {}
 
   async listTasks(userId: string, projectId: string): Promise<Task[]> {
@@ -23,7 +25,7 @@ export class TasksService {
   async createTask(userId: string, projectId: string, dto: CreateTaskDto): Promise<Task> {
     await this.verifyProjectAccess(userId, projectId);
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data: {
         title: dto.title,
         description: dto.description,
@@ -32,6 +34,21 @@ export class TasksService {
         projectId,
       },
     });
+
+    // Notify assignee if task was assigned
+    if (dto.assigneeId) {
+      const assignee = await this.prisma.user.findUnique({
+        where: { id: dto.assigneeId },
+      });
+      if (assignee) {
+        this.notificationsGateway.notifyTaskAssigned(dto.assigneeId, {
+          taskId: task.id,
+          assigneeName: assignee.name,
+        });
+      }
+    }
+
+    return task;
   }
 
   async updateTask(userId: string, taskId: string, dto: UpdateTaskDto): Promise<Task> {
@@ -52,10 +69,25 @@ export class TasksService {
     if (dto.dueDate !== undefined) updateData.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
     if (dto.assigneeId !== undefined) updateData.assigneeId = dto.assigneeId;
 
-    return this.prisma.task.update({
+    const updatedTask = await this.prisma.task.update({
       where: { id: taskId },
       data: updateData,
     });
+
+    // Notify new assignee if assignment changed
+    if (dto.assigneeId !== undefined && dto.assigneeId !== task.assigneeId && dto.assigneeId) {
+      const assignee = await this.prisma.user.findUnique({
+        where: { id: dto.assigneeId },
+      });
+      if (assignee) {
+        this.notificationsGateway.notifyTaskAssigned(dto.assigneeId, {
+          taskId: updatedTask.id,
+          assigneeName: assignee.name,
+        });
+      }
+    }
+
+    return updatedTask;
   }
 
   async getTaskById(taskId: string): Promise<Task | null> {
