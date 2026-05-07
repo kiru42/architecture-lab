@@ -61,7 +61,7 @@ BACKEND_URL=http://localhost:3000 npm test
 | 01 | Layered / N-tier | ✅ Done | [ADR-0010](docs/adrs/0010-backend-layered.md) | Simple but coupled to Prisma. Mock 20+ methods in tests. |
 | 02 | Clean Architecture | ✅ Done | [ADR-0011](docs/adrs/0011-backend-clean-architecture.md) | Excellent testability (mock 4 methods). +67% LOC vs Layered. |
 | 03 | Hexagonal (Ports & Adapters) | ✅ Done | [ADR-0012](docs/adrs/0012-backend-hexagonal.md) | **Same as Clean** with explicit "Ports IN/OUT" naming. |
-| 04 | Onion | ⏳ Pending | — | — |
+| 04 | Onion | ✅ Done | [ADR-0013](docs/adrs/0013-backend-onion.md) | **Same as Clean/Hexagonal** with "concentric layers" metaphor. |
 | 05 | DDD | ⏳ Pending | — | — |
 | 06 | CQRS + Event Sourcing | ⏳ Pending | — | — |
 | 07 | Modular Monolith | ⏳ Pending | — | — |
@@ -90,7 +90,7 @@ BACKEND_URL=http://localhost:3000 npm test
 
 ## Key Findings So Far
 
-### Backend Architectures (01-03)
+### Backend Architectures (01-04)
 
 **Layered (Baseline):**
 - ✅ Fast to implement (~100 LOC/feature, 1.5h first feature)
@@ -112,7 +112,14 @@ BACKEND_URL=http://localhost:3000 npm test
 - ⚠️ **Structurally identical to Clean** (just renamed layers)
 - **Use when:** Team prefers Alistair Cockburn vocabulary over Uncle Bob
 
-**Verdict:** Clean ≈ Hexagonal (cosmetic difference). Both superior to Layered for testability, but slower to build.
+**Onion Architecture:**
+- ✅ Same benefits as Clean/Hexagonal
+- ✅ "Concentric layers" metaphor (domain at center)
+- ⚠️ **Structurally identical to Clean/Hexagonal** (only naming differs)
+- ❌ String-based DI tokens less type-safe than abstract classes
+- **Use when:** Team prefers "layers" terminology over "circles" or "ports"
+
+**Critical Finding:** Clean ≈ Hexagonal ≈ Onion (cosmetic differences only). All three produce identical dependency graphs with domain at center, application layer wrapping it, and infrastructure at edges. The real choice is **domain-centric** (Clean/Hexagonal/Onion) vs **data-centric** (Layered).
 
 ---
 
