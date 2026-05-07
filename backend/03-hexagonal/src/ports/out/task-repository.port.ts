@@ -1,4 +1,4 @@
-import { Task } from '@domain/index';
+import { Task } from '../../domain';
 
 export interface TaskRepositoryPort {
   create(task: Task): Promise<Task>;
