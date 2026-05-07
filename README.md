@@ -63,7 +63,7 @@ BACKEND_URL=http://localhost:3000 npm test
 | 03 | Hexagonal (Ports & Adapters) | ✅ Done | [ADR-0012](docs/adrs/0012-backend-hexagonal.md) | **Same as Clean** with explicit "Ports IN/OUT" naming. |
 | 04 | Onion | ✅ Done | [ADR-0013](docs/adrs/0013-backend-onion.md) | **Same as Clean/Hexagonal** with "concentric layers" metaphor. |
 | 05 | DDD | ✅ Done | [ADR-0014](docs/adrs/0014-backend-ddd.md) | **Bounded Contexts > Layers**. Value Objects = type-safe + validation. 2.5x more code but worth it for complex domains. |
-| 06 | CQRS + Event Sourcing | ⏳ Pending | — | — |
+| 06 | CQRS + Event Sourcing | ✅ Done | [ADR-0015](docs/adrs/0015-backend-cqrs-es.md) | **Events = source of truth**. Complete audit trail + temporal queries. Very high complexity, worth it for audit-critical domains. |
 | 07 | Modular Monolith | ⏳ Pending | — | — |
 
 ### Frontend
