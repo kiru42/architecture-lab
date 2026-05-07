@@ -19,8 +19,10 @@ services:
 
   backend:
     build:
-      context: ./backend/${BACKEND:-01-layered-ntier}
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/${BACKEND:-01-layered-ntier}/Dockerfile
+      args:
+        BACKEND_DIR: ${BACKEND:-01-layered-ntier}
     ports:
       - "3000:3000"
     environment:
@@ -32,6 +34,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/${BACKEND:-01-layered-ntier}:/app
+      - ./shared:/shared
       - /app/node_modules
 
   frontend:
