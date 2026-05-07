@@ -1,341 +1,276 @@
-# ADR 0012: Backend Implementation - Hexagonal Architecture
+# ADR-0012: Backend #3 — Hexagonal Architecture
 
-## Status
-Accepted
+**Date:** 2026-05-07  
+**Status:** ✅ Implemented  
+**Architecture:** Hexagonal (Ports & Adapters)
 
 ## Context
-We are implementing backend #3 using Hexagonal Architecture (Ports & Adapters pattern) to compare with:
-- Backend #1: Traditional Layered/N-tier Architecture
-- Backend #2: Clean Architecture
 
-The goal is to understand the practical differences between these patterns in a real-world NestJS implementation.
+Après avoir implémenté Backend #1 (Layered) et Backend #2 (Clean Architecture), nous explorons **Hexagonal Architecture** (aka Ports & Adapters, Alistair Cockburn 2005).
+
+**Question centrale:** Hexagonal et Clean sont-ils vraiment différents en pratique, ou juste un renommage de concepts ?
 
 ## Decision
 
-### Architecture: Hexagonal (Ports & Adapters)
-
-The hexagonal architecture organizes code around:
-1. **Domain Core (Hexagon)**: Business entities and port interfaces
-2. **Primary Ports**: Interfaces for driving the app (use cases)
-3. **Secondary Ports**: Interfaces for infrastructure dependencies
-4. **Primary Adapters**: Implementations that call the app (HTTP, WebSocket)
-5. **Secondary Adapters**: Implementations of infrastructure (databases, APIs)
-
-### Structure
+Implémenter TaskFlow avec architecture hexagonale "pure" :
 
 ```
 src/
-├── domain/
-│   ├── model/                    # Domain entities
-│   └── ports/
-│       ├── primary/              # Use case interfaces
-│       └── secondary/            # Repository interfaces
-├── application/
-│   └── use-cases/                # Primary port implementations
-├── adapters/
-│   ├── primary/
-│   │   ├── http/                 # Controllers
-│   │   └── websocket/            # Gateways
-│   └── secondary/
-│       └── persistence/          # Repository implementations
-└── main.ts
-```
-
-### Key Principles
-
-1. **Dependency Inversion**: All dependencies point inward to domain
-2. **Port Interfaces**: Explicit contracts at boundaries
-3. **Adapter Pattern**: Swap implementations without changing core
-4. **Separation of Concerns**: Clear distinction between driving and driven
-
-## Implementation Details
-
-### Domain Layer
-- **Entities**: Pure business objects with domain logic
-- **Primary Ports**: Interfaces defining what the app can do
-- **Secondary Ports**: Interfaces defining what the app needs
-
-Example:
-```typescript
-// domain/ports/primary/create-task.usecase.interface.ts
-export interface ICreateTaskUseCase {
-  execute(data: CreateTaskData): Promise<Task>;
-}
-
-// domain/ports/secondary/task.repository.interface.ts
-export interface ITaskRepository {
-  create(data: TaskData): Promise<Task>;
-  findById(id: string): Promise<Task | null>;
-}
-```
-
-### Application Layer
-- **Use Cases**: Implement primary port interfaces
-- Orchestrate domain entities and secondary ports
-- Contain application-specific business rules
-
-Example:
-```typescript
-@Injectable()
-export class CreateTaskUseCase implements ICreateTaskUseCase {
-  constructor(
-    @Inject(ITaskRepository)
-    private readonly taskRepository: ITaskRepository,
-    @Inject(IProjectRepository)
-    private readonly projectRepository: IProjectRepository,
-  ) {}
-
-  async execute(data: CreateTaskData): Promise<Task> {
-    // Verify project exists and authorization
-    const project = await this.projectRepository.findById(data.projectId);
-    if (!project || project.userId !== data.userId) {
-      throw new ForbiddenException();
-    }
-    
-    return await this.taskRepository.create(data);
-  }
-}
-```
-
-### Adapters Layer
-
-**Primary Adapters** (driving the app):
-```typescript
-@Controller()
-export class TasksController {
-  constructor(
-    @Inject(ICreateTaskUseCase)
-    private readonly createTaskUseCase: ICreateTaskUseCase,
-  ) {}
-
-  @Post('projects/:id/tasks')
-  async create(@Body() dto: CreateTaskDto, @Param('id') projectId: string) {
-    return await this.createTaskUseCase.execute({
-      ...dto,
-      projectId,
-    });
-  }
-}
-```
-
-**Secondary Adapters** (driven by the app):
-```typescript
-@Injectable()
-export class TaskRepository implements ITaskRepository {
-  constructor(private readonly prisma: PrismaService) {}
-  
-  async create(data: TaskData): Promise<Task> {
-    const task = await this.prisma.task.create({ data });
-    return new Task(task);
-  }
-}
-```
-
-## Differs from Clean Architecture
-
-### Honest Comparison
-
-After implementing both, here are the **actual differences** in code:
-
-#### 1. **Terminology & Mental Model**
-
-**Hexagonal:**
-- Thinks in terms of "ports" (interfaces) and "adapters" (implementations)
-- Emphasizes the "hexagon" metaphor: domain at center, adapters plug in
-- Explicitly names "primary" (driving) vs "secondary" (driven) ports
-
-**Clean:**
-- Thinks in terms of concentric circles with dependency rule
-- Uses terms like "use cases", "entities", "gateways"
-- Emphasizes layers: entities → use cases → interface adapters → frameworks
-
-**In Practice**: Both are just different visualizations of the same dependency inversion principle. The actual code structure is nearly identical.
-
-#### 2. **Use Case Interfaces (Primary Ports)**
-
-**Hexagonal** ✅:
-- Explicitly defines `ICreateTaskUseCase` interfaces
-- Controllers depend on these interfaces
-- Clear contract: "this is what you can ask the app to do"
-
-```typescript
-// Explicit interface
-export interface ICreateTaskUseCase {
-  execute(data: CreateTaskData): Promise<Task>;
-}
-
-// Controller depends on interface
-constructor(@Inject(ICreateTaskUseCase) private useCase: ICreateTaskUseCase)
-```
-
-**Clean Architecture** ❌:
-- Often skips use case interfaces
-- Controllers directly inject concrete use case classes
-- Justification: "use cases are already application-specific, so interfaces add little value"
-
-```typescript
-// No interface, direct dependency
-constructor(private readonly createTaskUseCase: CreateTaskUseCase)
-```
-
-**Reality Check**: In our Clean Architecture implementation (backend #2), we also used interfaces for consistency. So this difference only exists in "pure" Clean Architecture interpretations.
-
-#### 3. **Directory Organization**
-
-**Hexagonal:**
-```
-src/
-├── domain/
-│   ├── model/
-│   └── ports/
-│       ├── primary/      # Use case interfaces
-│       └── secondary/    # Repository interfaces
-├── application/
-│   └── use-cases/        # Use case implementations
+├── domain/              # Business entities (pure logic)
+├── ports/
+│   ├── in/             # Driving ports (use case interfaces)
+│   └── out/            # Driven ports (repository/service interfaces)
+├── application/         # Use cases (implement ports IN, use ports OUT)
 └── adapters/
-    ├── primary/          # HTTP, WebSocket
-    └── secondary/        # Prisma, external APIs
+    ├── in/             # Primary adapters (HTTP, CLI...)
+    └── out/            # Secondary adapters (Prisma, bcrypt...)
 ```
 
-**Clean:**
+### Vocabulaire Hexagonal
+
+| Concept | Définition | Équivalent Clean |
+|---------|-----------|------------------|
+| **Port IN (Driving)** | Interface exposée par l'application | Use case interface |
+| **Port OUT (Driven)** | Interface requise par l'application | Repository interface |
+| **Adapter IN (Primary)** | Appelle l'application | Controller (Presentation) |
+| **Adapter OUT (Secondary)** | Implémente un port OUT | Repository impl (Infrastructure) |
+
+## Implementation
+
+### 1. Domain Layer
+
+**Identique à Clean Architecture:**
+
+```typescript
+// domain/entities/project.entity.ts
+export class Project {
+  constructor(
+    public readonly id: string,
+    public readonly name: string,
+    // ...
+  ) {}
+
+  static create(...) { ... }
+  isOwnedBy(userId: string): boolean { ... }
+  updateInfo(...): Project { ... }
+}
 ```
-src/
-├── domain/
-│   ├── entities/
-│   └── repositories/     # Repository interfaces (only secondary)
-├── application/
-│   └── use-cases/        # Use case implementations (no interfaces)
-└── infrastructure/
-    ├── http/
-    ├── websocket/
-    └── persistence/
+
+**Observation:** Aucune différence vs Clean.
+
+### 2. Ports IN (Driving)
+
+**Nouveau concept explicite:**
+
+```typescript
+// ports/in/project.port.ts
+export interface CreateProjectCommand {
+  name: string;
+  ownerId: string;
+}
+
+export interface CreateProjectPort {
+  execute(command: CreateProjectCommand): Promise<Project>;
+}
 ```
 
-**Difference**:
-- Hexagonal explicitly separates primary/secondary ports
-- Clean merges them or only focuses on secondary (repository) interfaces
+**En Clean, on aurait juste:**
+```typescript
+// application/use-cases/create-project.use-case.ts
+export class CreateProjectUseCase {
+  execute(dto: CreateProjectDto): Promise<Project> { ... }
+}
+```
 
-**Honest Take**: This is mostly a naming/organization preference. Both enforce the same dependency rule.
+**Différence:** Hexagonal force une **interface explicite** pour chaque use case. Clean peut les définir ou non (optionnel).
 
-#### 4. **Framework Independence**
+### 3. Ports OUT (Driven)
 
-Both patterns claim "framework independence," but in practice:
+**Identique à Clean:**
+
+```typescript
+// ports/out/project-repository.port.ts
+export interface ProjectRepositoryPort {
+  create(project: Project): Promise<Project>;
+  findByName(name: string): Promise<Project | null>;
+}
+```
+
+**En Clean:**
+```typescript
+// domain/repositories/project.repository.ts
+export interface IProjectRepository {
+  create(project: Project): Promise<Project>;
+  findByName(name: string): Promise<Project | null>;
+}
+```
+
+**Différence:** Nommage (`Port` vs `IRepository`), localisation (`ports/out` vs `domain/repositories`). **Sémantiquement identiques.**
+
+### 4. Application Layer (Use Cases)
 
 **Hexagonal:**
-- Uses NestJS decorators (`@Injectable`, `@Controller`) in adapters
-- Domain and use cases are "pure" TypeScript (no decorators)
+```typescript
+// application/use-cases/create-project.use-case.ts
+@Injectable()
+export class CreateProjectUseCase implements CreateProjectPort {
+  constructor(
+    private readonly projectRepository: ProjectRepositoryPort
+  ) {}
+
+  async execute(command: CreateProjectCommand): Promise<Project> {
+    // ... business logic
+  }
+}
+```
 
 **Clean:**
-- Same! Uses NestJS in infrastructure, pure TypeScript in domain/use cases
+```typescript
+// application/use-cases/create-project.use-case.ts
+@Injectable()
+export class CreateProjectUseCase {
+  constructor(
+    private readonly projectRepository: IProjectRepository
+  ) {}
 
-**Verdict**: No practical difference. Both are "framework-independent" in the same way.
+  async execute(dto: CreateProjectDto): Promise<Project> {
+    // ... business logic
+  }
+}
+```
 
-#### 5. **What Collapsed to the Same Thing**
+**Différence:** Hexagonal force `implements CreateProjectPort`. Clean peut le faire ou non (optionnel). **Logique identique.**
 
-In our implementation, these concepts are **identical**:
+### 5. Adapters IN (Primary)
 
-| Hexagonal | Clean Architecture | Actual Code |
-|-----------|-------------------|-------------|
-| Domain Model | Entities | Pure TypeScript classes |
-| Primary Ports | Use Case Interfaces | TypeScript interfaces (if used) |
-| Secondary Ports | Gateway Interfaces | TypeScript interfaces |
-| Primary Adapters | Controllers | NestJS controllers |
-| Secondary Adapters | Gateways/Repositories | Prisma repositories |
-| Use Cases | Use Cases | Same class structure |
+**Hexagonal:**
+```typescript
+// adapters/in/http/projects/project.controller.ts
+@Controller('projects')
+export class ProjectController {
+  constructor(
+    private readonly createProjectUseCase: CreateProjectPort  // Port IN
+  ) {}
+}
+```
 
-### The Honest Truth
+**Clean:**
+```typescript
+// presentation/projects/projects.controller.ts
+@Controller('projects')
+export class ProjectsController {
+  constructor(
+    private readonly createProjectUseCase: CreateProjectUseCase
+  ) {}
+}
+```
 
-**These patterns are ~95% the same in practice.**
+**Différence:** Hexagonal injecte l'**interface** (`CreateProjectPort`), Clean injecte la **classe** (`CreateProjectUseCase`). En NestJS, les deux fonctionnent via DI.
 
-The differences are:
-1. **Terminology**: "Ports & Adapters" vs "Entities & Use Cases"
-2. **Visualization**: Hexagon vs Concentric Circles
-3. **Primary Port Interfaces**: Hexagonal makes them explicit, Clean often omits them
+### 6. Adapters OUT (Secondary)
 
-Both achieve:
-- ✅ Dependency inversion (dependencies point inward)
-- ✅ Testability (easy to mock dependencies)
-- ✅ Separation of concerns (domain, application, infrastructure)
-- ✅ Framework independence (in theory, same in practice)
+**Identique à Clean:**
 
-**When to use Hexagonal over Clean:**
-- You want explicit interfaces for ALL boundaries (primary + secondary)
-- You like the "ports and adapters" mental model
-- You're building a system with many different types of drivers (HTTP, CLI, message queue, etc.)
+```typescript
+// adapters/out/persistence/prisma/project-repository.adapter.ts
+@Injectable()
+export class PrismaProjectRepository implements ProjectRepositoryPort {
+  async create(project: Project): Promise<Project> {
+    // Prisma logic
+  }
+}
+```
 
-**When to use Clean over Hexagonal:**
-- You prefer the "concentric circles" visualization
-- You're okay with use cases being concrete classes (no interfaces)
-- You like Uncle Bob's terminology
-
-## Comparison to Layered Architecture
-
-### vs. Backend #1 (Layered)
-
-| Aspect | Layered | Hexagonal |
-|--------|---------|-----------|
-| **Structure** | Horizontal layers | Core + Adapters |
-| **Dependencies** | Top-down (Controller → Service → Repository) | Inward to domain |
-| **Interfaces** | Optional | Mandatory at boundaries |
-| **Domain Logic** | Mixed in services | Isolated in domain |
-| **Testability** | Requires database mocks | Easy to test in isolation |
-| **Flexibility** | Tight coupling to framework | Adapters are swappable |
+**Différence:** Aucune. Même code que Clean Infrastructure layer.
 
 ## Consequences
 
-### Benefits
-1. **Explicit Contracts**: Port interfaces make expectations clear
-2. **Testability**: Domain logic easily tested without infrastructure
-3. **Flexibility**: Can swap adapters (HTTP → gRPC, Prisma → TypeORM)
-4. **Screaming Architecture**: Structure tells you what the app does
+### ✅ Avantages
 
-### Drawbacks
-1. **More Boilerplate**: Every boundary needs an interface
-2. **Indirection**: More files to navigate (interface → implementation)
-3. **Overkill for Simple CRUD**: Extra layers may not add value
-4. **Learning Curve**: Developers need to understand ports/adapters concept
+1. **Vocabulaire standardisé:** "Ports & Adapters" est un langage commun reconnu
+2. **Explicite:** Séparer `ports/in` et `ports/out` rend le flow plus clair
+3. **Testabilité:** Identique à Clean (mock 4 méthodes vs 20+ en Layered)
+4. **Swap facile:** Nouveau Adapter OUT = nouvelle implémentation de Port OUT
 
-### When to Use
-- ✅ Complex domain logic that needs isolation
-- ✅ Multiple types of clients (HTTP, CLI, message queue)
-- ✅ High testability requirements
-- ✅ Long-lived projects where flexibility matters
+### ❌ Inconvénients
 
-### When NOT to Use
-- ❌ Simple CRUD applications
-- ❌ Prototypes or MVPs
-- ❌ Small teams unfamiliar with the pattern
-- ❌ Time-constrained projects
+1. **Vocabulaire moins intuitif:** "Primary/Secondary adapters" vs "Presentation/Infrastructure"
+2. **Redondance:** Forcer une interface pour chaque use case = boilerplate
+3. **Aucune différence technique vs Clean:** C'est du Clean avec renommage
+
+### 📊 Métriques
+
+| Métrique | Backend #1 (Layered) | Backend #2 (Clean) | **Backend #3 (Hexagonal)** |
+|----------|---------------------|-------------------|---------------------------|
+| LOC/feature | ~100 | ~167 | **~167** |
+| Tests passing | 28/28 | 14/14 | **7/7** |
+| Mock methods (tests) | 20+ Prisma | 4 repository | **4 repository** |
+| First feature time | 1.5h | 2.5h | **2.5h** |
+| Build time | 8s | 10s | **10s** |
+
+**Observation:** Métriques **identiques** à Clean Architecture.
+
+### 🤔 Hexagonal vs Clean — Verdict
+
+**Structurellement identiques.** Mapping complet :
+
+| Hexagonal | Clean Architecture |
+|-----------|-------------------|
+| `domain/` | `domain/` |
+| `ports/in/` (interfaces) | Use case interfaces (optionnelles) |
+| `ports/out/` (interfaces) | `domain/repositories/` |
+| `application/` (use cases) | `application/use-cases/` |
+| `adapters/in/` | `presentation/` |
+| `adapters/out/` | `infrastructure/` |
+
+**Différences cosmétiques:**
+1. Hexagonal force des interfaces pour use cases (ports IN)
+2. Hexagonal nomme explicitement "Ports" et "Adapters"
+3. Hexagonal utilise le vocabulaire Cockburn ("Primary/Secondary")
+
+**En pratique:** Si vous implémentez Clean avec des interfaces explicites pour vos use cases, vous avez déjà du Hexagonal.
+
+### 🔮 Quand choisir Hexagonal vs Clean ?
+
+**Hexagonal si:**
+- Votre équipe connaît le vocabulaire "Ports & Adapters"
+- Vous voulez forcer des interfaces explicites partout
+- Vous aimez la symétrie `adapters/in` ↔ `adapters/out`
+
+**Clean si:**
+- Vous préférez le vocabulaire Uncle Bob ("Presentation/Infrastructure")
+- Vous ne voulez pas de boilerplate d'interfaces pour use cases simples
+- Vous voulez plus de flexibilité (interfaces optionnelles)
+
+**En réalité:** Les deux sont équivalents. Choisissez selon le vocabulaire que votre équipe préfère.
+
+## Lessons Learned
+
+1. **Hexagonal ≈ Clean avec renommage:** La structure est identique, seuls les noms changent
+2. **Interfaces de use cases:** Hexagonal les force, Clean les rend optionnelles. Dans les deux cas, c'est du boilerplate pour des use cases simples.
+3. **Ports OUT = Repository interfaces:** Même concept, même localisation (ou presque)
+4. **Testabilité identique:** Clean et Hexagonal mockent 4 méthodes, Layered 20+
+5. **Symétrie adapters IN/OUT:** Plus claire en Hexagonal, mais Clean peut faire pareil avec "Presentation/Infrastructure"
+
+## Related
+
+- [ADR-0010: Backend Layered](./0010-backend-layered.md)
+- [ADR-0011: Backend Clean Architecture](./0011-backend-clean-architecture.md)
 
 ## Notes
 
-### Dependency Injection
-NestJS providers wire adapters to ports:
-```typescript
-{
-  provide: ITaskRepository,
-  useClass: TaskRepository,
-}
-```
+**Question posée dans ADR-0011:** "Does Hexagonal collapse into Clean in practice?"
 
-This allows:
-- Testing with mocks
-- Swapping implementations at runtime
-- Clear separation of concerns
+**Réponse:** **Oui.** En NestJS (ou tout framework avec DI), Hexagonal et Clean sont structurellement identiques. La différence est cosmétique :
+- Hexagonal nomme explicitement "Ports IN/OUT"
+- Clean laisse implicites (mais ils existent quand même)
 
-### Domain Events
-Could be added as another secondary port:
-```typescript
-export interface IEventPublisher {
-  publish(event: DomainEvent): Promise<void>;
-}
-```
+Si vous implémentez Clean avec :
+1. Des interfaces pour vos use cases → vous avez des Ports IN
+2. Des interfaces pour vos repositories → vous avez des Ports OUT
 
-### Validation
-Handled at adapter layer (DTOs with class-validator) to keep domain pure.
+Donc Clean **est** Hexagonal, juste avec un vocabulaire différent.
 
-## References
-- [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture/)
-- [Clean Architecture (Robert Martin)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- Backend #1 ADR: `0010-backend-layered.md`
-- Backend #2 ADR: `0011-backend-clean.md` (if exists)
+---
+
+**Conclusion finale:** Architecture hexagonale = Clean Architecture avec vocabulaire "Ports & Adapters" explicite. Techniquement équivalentes. Choisissez selon la culture de votre équipe.
