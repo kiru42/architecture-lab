@@ -29,7 +29,7 @@ export class PrismaTaskRepository implements TaskRepository {
       orderBy: { createdAt: 'desc' },
     });
     
-    return prismaTasks.map(t => new Task(
+    return prismaTasks.map((t: any) => new Task(
       t.id,
       t.title,
       t.description,

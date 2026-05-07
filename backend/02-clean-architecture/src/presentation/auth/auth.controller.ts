@@ -1,5 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { RegisterUseCase, LoginUseCase } from '../../core/application/use-cases/register.use-case';
+import { RegisterUseCase } from '../../core/application/use-cases/register.use-case';
+import { LoginUseCase } from '../../core/application/use-cases/login.use-case';
 import { RegisterDto, LoginDto } from '../../core/application/dtos/auth.dto';
 
 @Controller('auth')

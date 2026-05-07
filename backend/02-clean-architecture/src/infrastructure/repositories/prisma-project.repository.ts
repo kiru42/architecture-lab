@@ -26,7 +26,7 @@ export class PrismaProjectRepository implements ProjectRepository {
       orderBy: { createdAt: 'desc' },
     });
     
-    return prismaProjects.map(p => new Project(
+    return prismaProjects.map((p: any) => new Project(
       p.id,
       p.name,
       p.archived,
