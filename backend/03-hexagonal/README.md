@@ -1,236 +1,194 @@
-# TaskFlow Backend - Hexagonal Architecture (Ports & Adapters)
+# Backend #3 — Hexagonal Architecture (Ports & Adapters)
 
-This implementation demonstrates the **Hexagonal Architecture** pattern, also known as **Ports and Adapters**.
+Architecture hexagonale avec séparation explicite des **ports** (interfaces) et **adapters** (implémentations).
 
-## Architecture Overview
-
-```mermaid
-graph TB
-    subgraph "Primary Adapters (Driving Side)"
-        HTTP[HTTP Controllers]
-        WS[WebSocket Gateway]
-    end
-
-    subgraph "Application Layer"
-        UC[Use Cases<br/>SignupUseCase<br/>CreateTaskUseCase<br/>etc.]
-    end
-
-    subgraph "Domain (Hexagon Core)"
-        subgraph "Primary Ports"
-            PP[ISignupUseCase<br/>ICreateTaskUseCase<br/>etc.]
-        end
-        
-        subgraph "Domain Model"
-            DM[User<br/>Project<br/>Task<br/>Comment]
-        end
-        
-        subgraph "Secondary Ports"
-            SP[IUserRepository<br/>IProjectRepository<br/>ITaskRepository<br/>etc.]
-        end
-    end
-
-    subgraph "Secondary Adapters (Driven Side)"
-        REPOS[Prisma Repositories<br/>UserRepository<br/>ProjectRepository<br/>etc.]
-        DB[(PostgreSQL)]
-    end
-
-    HTTP -->|implements| PP
-    WS -->|implements| PP
-    PP -.->|interface| UC
-    UC -->|uses| DM
-    UC -->|depends on| SP
-    SP -.->|interface| REPOS
-    REPOS --> DB
-
-    style PP fill:#e1f5ff
-    style SP fill:#ffe1e1
-    style DM fill:#e1ffe1
-```
-
-## Key Hexagonal Concepts
-
-### **The Hexagon (Domain Core)**
-- **Domain Model**: Pure business entities (User, Project, Task, Comment)
-- **Primary Ports**: Interfaces for use cases (what the app DOES)
-- **Secondary Ports**: Interfaces for infrastructure (what the app NEEDS)
-
-### **Primary Adapters (Driving/Input)**
-Drive the application by calling primary ports:
-- **HTTP Controllers**: REST API endpoints
-- **WebSocket Gateway**: Real-time events
-
-### **Secondary Adapters (Driven/Output)**
-Implement secondary ports to provide infrastructure:
-- **Prisma Repositories**: Database access implementation
-
-### **Application Layer**
-- **Use Cases**: Implement primary port interfaces
-- Orchestrate domain logic and secondary ports
-
-## Directory Structure
+## 🏗️ Structure
 
 ```
 src/
-├── domain/                         # HEXAGON CORE
-│   ├── model/                      # Domain entities
-│   │   ├── user.entity.ts
-│   │   ├── project.entity.ts
-│   │   ├── task.entity.ts
-│   │   └── comment.entity.ts
-│   └── ports/
-│       ├── primary/                # Use case interfaces (driving)
-│       │   ├── signup.usecase.interface.ts
-│       │   ├── signin.usecase.interface.ts
-│       │   ├── create-project.usecase.interface.ts
-│       │   ├── create-task.usecase.interface.ts
-│       │   └── ...
-│       └── secondary/              # Repository interfaces (driven)
-│           ├── user.repository.interface.ts
-│           ├── project.repository.interface.ts
-│           ├── task.repository.interface.ts
-│           └── comment.repository.interface.ts
-├── application/
-│   └── use-cases/                  # Implement primary ports
-│       ├── signup.usecase.ts
-│       ├── signin.usecase.ts
-│       ├── create-project.usecase.ts
-│       ├── create-task.usecase.ts
+├── domain/              # Entités métier (pure business logic)
+│   └── entities/
+│       ├── user.entity.ts
+│       ├── project.entity.ts
+│       └── task.entity.ts
+│
+├── ports/               # Interfaces (contrats)
+│   ├── in/             # Driving ports (use cases)
+│   │   ├── auth.port.ts
+│   │   ├── project.port.ts
+│   │   └── task.port.ts
+│   └── out/            # Driven ports (repositories, services)
+│       ├── user-repository.port.ts
+│       ├── project-repository.port.ts
+│       ├── task-repository.port.ts
+│       ├── hash-service.port.ts
+│       └── jwt-service.port.ts
+│
+├── application/         # Use cases (application logic)
+│   └── use-cases/
+│       ├── register-user.use-case.ts
+│       ├── login-user.use-case.ts
+│       ├── create-project.use-case.ts
+│       ├── assign-task.use-case.ts
 │       └── ...
-├── adapters/
-│   ├── primary/                    # Driving adapters
-│   │   ├── http/                   # NestJS controllers
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── projects.controller.ts
-│   │   │   ├── tasks.controller.ts
-│   │   │   └── comments.controller.ts
-│   │   └── websocket/              # WebSocket gateway
-│   │       └── task-events.gateway.ts
-│   └── secondary/                  # Driven adapters
-│       └── persistence/            # Prisma implementations
-│           ├── prisma.service.ts
-│           ├── user.repository.ts
-│           ├── project.repository.ts
-│           ├── task.repository.ts
-│           └── comment.repository.ts
-├── app.module.ts                   # Dependency injection wiring
-└── main.ts
+│
+├── adapters/            # Implémentations concrètes
+│   ├── in/             # Primary adapters (HTTP, CLI, WS...)
+│   │   └── http/
+│   │       ├── auth/
+│   │       ├── projects/
+│   │       └── tasks/
+│   └── out/            # Secondary adapters (DB, external APIs...)
+│       ├── persistence/prisma/
+│       └── auth/
+│
+└── modules/             # NestJS modules (wiring)
+    ├── auth/
+    ├── projects/
+    ├── tasks/
+    └── infrastructure/
 ```
 
-## Dependency Rule
+## 🔑 Concepts clés
 
-**All dependencies point INWARD to the domain:**
+### Ports vs Adapters
 
-1. **Primary Adapters** → depend on → **Primary Ports** (interfaces)
-2. **Use Cases** → implement → **Primary Ports**
-3. **Use Cases** → depend on → **Secondary Ports** (interfaces)
-4. **Secondary Adapters** → implement → **Secondary Ports**
+**Ports IN (Driving):**
+- Définissent ce que l'application **expose** au monde extérieur
+- Exemple: `RegisterUserPort`, `CreateProjectPort`
+- Implémentés par les **use cases** (application layer)
 
-The domain (hexagon core) has **zero dependencies** on outer layers.
+**Ports OUT (Driven):**
+- Définissent ce que l'application **attend** de l'infrastructure
+- Exemple: `UserRepositoryPort`, `HashServicePort`
+- Implémentés par les **adapters OUT** (Prisma, bcrypt, JWT...)
 
-## Ports & Adapters Explained
+**Adapters IN (Primary):**
+- Appellent l'application via les ports IN
+- Exemple: `AuthController` → appelle `RegisterUserPort`
 
-### Primary Ports (Input)
-Interfaces that define what the application can do:
-```typescript
-// domain/ports/primary/create-task.usecase.interface.ts
-export interface ICreateTaskUseCase {
-  execute(data: { ... }): Promise<Task>;
-}
+**Adapters OUT (Secondary):**
+- Implémentent les ports OUT
+- Exemple: `PrismaUserRepository` → implémente `UserRepositoryPort`
+
+### Flow de données
+
+```
+HTTP Request
+    ↓
+AuthController (Adapter IN)
+    ↓
+RegisterUserPort (Port IN interface)
+    ↓
+RegisterUserUseCase (implémente Port IN, utilise Ports OUT)
+    ↓
+UserRepositoryPort (Port OUT interface)
+    ↓
+PrismaUserRepository (Adapter OUT)
+    ↓
+Database
 ```
 
-### Primary Adapters
-Concrete implementations that drive the app:
-```typescript
-// adapters/primary/http/tasks.controller.ts
-@Controller()
-export class TasksController {
-  constructor(
-    @Inject(ICreateTaskUseCase)
-    private readonly createTaskUseCase: ICreateTaskUseCase,
-  ) {}
+## 📊 Comparaison avec les autres backends
 
-  @Post('projects/:id/tasks')
-  async create(...) {
-    return await this.createTaskUseCase.execute(...);
-  }
-}
+| Critère | Layered | Clean | **Hexagonal** |
+|---------|---------|-------|---------------|
+| **Séparation ports/adapters** | ❌ Non | ⚠️ Implicite | ✅ **Explicite (IN/OUT)** |
+| **Testabilité** | Moyenne (20+ mocks) | Excellente (4 mocks) | **Excellente (4 mocks)** |
+| **Business logic** | Services (couplée DB) | Entities | **Entities** |
+| **Use cases** | ❌ Services mixés | ✅ Use cases dédiés | ✅ **Use cases dédiés** |
+| **Repository interfaces** | ❌ Non | Domain layer | **Ports OUT** |
+| **Swap Prisma → MongoDB** | ❌ Hard | ✅ Easy | ✅ **Easy (nouveau adapter OUT)** |
+| **Complexité structure** | 🟢 Simple | 🟡 Moyenne | 🟡 **Moyenne** |
+| **Boilerplate** | 🟢 Faible | 🟡 Moyen | 🟡 **Moyen** |
+
+### Différence clé : Hexagonal vs Clean
+
+**Hexagonal:**
+```
+ports/in/        → Driving ports (use cases interfaces)
+ports/out/       → Driven ports (repositories, services)
+application/     → Use cases (implémentent ports IN)
+adapters/in/     → Primary adapters (HTTP, CLI...)
+adapters/out/    → Secondary adapters (DB, external APIs)
 ```
 
-### Secondary Ports (Output)
-Interfaces for infrastructure dependencies:
-```typescript
-// domain/ports/secondary/task.repository.interface.ts
-export interface ITaskRepository {
-  create(data: { ... }): Promise<Task>;
-  findById(id: string): Promise<Task | null>;
-  // ...
-}
+**Clean:**
+```
+domain/repositories/     → Repository interfaces (= ports OUT)
+application/use-cases/   → Use cases (= ports IN implémentés)
+infrastructure/          → Adapters OUT (Prisma)
+presentation/            → Adapters IN (controllers)
 ```
 
-### Secondary Adapters
-Concrete implementations of infrastructure:
-```typescript
-// adapters/secondary/persistence/task.repository.ts
-@Injectable()
-export class TaskRepository implements ITaskRepository {
-  constructor(private readonly prisma: PrismaService) {}
-  
-  async create(data: { ... }): Promise<Task> {
-    const task = await this.prisma.task.create({ data });
-    return new Task(task);
-  }
-  // ...
-}
-```
+**Verdict:** Structurellement identiques. Hexagonal nomme explicitement les concepts (ports IN/OUT), Clean les laisse implicites.
 
-## Setup & Run
+## 🧪 Tests
 
 ```bash
-# Install dependencies
+npm test
+```
+
+**Résultats:** 7/7 tests passing
+
+**Couverture:**
+- Domain entities: `Project.isOwnedBy()`, `Project.updateInfo()`
+- Use cases: `CreateProjectUseCase` (happy path + conflict)
+
+**Avantage testabilité:**
+- Clean/Hexagonal: Mock 4 méthodes repository
+- Layered: Mock 20+ méthodes Prisma
+
+## 🚀 Run
+
+```bash
+# 1. Install dependencies
 npm install
 
-# Generate Prisma client
-npm run prisma:generate
+# 2. Copy Prisma client (workaround)
+cp -r ../../node_modules/.prisma ./node_modules/.prisma
 
-# Run migrations
-npm run prisma:migrate
+# 3. Setup DB
+cp .env.example .env
+# Edit DATABASE_URL in .env
 
-# Start development server
-npm run start:dev
+# 4. Build
+npm run build
+
+# 5. Run
+npm start
 ```
 
-## Testing the API
+Port: `3003`
 
-```bash
-# Signup
-curl -X POST http://localhost:3000/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
+## 📝 Observations
 
-# Signin
-curl -X POST http://localhost:3000/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
+### ✅ Forces
 
-# Get profile (requires token)
-curl http://localhost:3000/auth/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
+1. **Nommage explicite:** Les concepts de ports IN/OUT rendent le flow plus clair
+2. **Symétrie:** `adapters/in` et `adapters/out` sont symétriques
+3. **Testabilité:** Identique à Clean (mock 4 méthodes vs 20+)
+4. **Swap facile:** Nouveau adapter OUT = nouvelle implémentation de port
 
-# Create project
-curl -X POST http://localhost:3000/projects \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"My Project"}'
-```
+### ⚠️ Faiblesses
 
-## Benefits of Hexagonal Architecture
+1. **Vocabulaire théorique:** "Primary/Secondary adapters" moins intuitif que "Presentation/Infrastructure"
+2. **Même structure que Clean:** En pratique, c'est du Clean avec un renommage
+3. **Boilerplate:** Autant que Clean (~167 LOC/feature vs 100 pour Layered)
 
-1. **Technology Independence**: Domain doesn't depend on frameworks
-2. **Testability**: Easy to test domain logic in isolation
-3. **Flexibility**: Can swap adapters without touching domain
-4. **Clear Boundaries**: Explicit ports define contracts
-5. **Screaming Architecture**: Structure tells you what the app does
+### 🤔 Question centrale
 
-## Comparison to Other Patterns
+**Hexagonal et Clean sont-ils vraiment différents ?**
 
-See ADR `docs/adrs/0012-backend-hexagonal.md` for detailed comparison with Layered and Clean Architecture.
+Non. En NestJS, les deux architectures aboutissent à la même structure :
+- Ports IN = Use case interfaces
+- Ports OUT = Repository interfaces
+- Application layer = Use cases
+- Adapters IN = Controllers
+- Adapters OUT = Prisma repositories
+
+La différence est **cosmétique** : Hexagonal nomme explicitement les ports, Clean les laisse implicites mais ils existent quand même.
+
+---
+
+**Conclusion:** Architecture identique à Clean avec vocabulaire "ports & adapters" explicite. Si vous aimez le vocabulaire Alistair Cockburn, prenez Hexagonal. Si vous préférez Uncle Bob, prenez Clean. Techniquement, c'est la même chose.
