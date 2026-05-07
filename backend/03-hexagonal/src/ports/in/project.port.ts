@@ -1,4 +1,4 @@
-import { Project } from '@domain/index';
+import { Project } from '../../domain';
 
 export interface CreateProjectCommand {
   name: string;

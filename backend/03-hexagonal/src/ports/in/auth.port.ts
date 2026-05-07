@@ -1,4 +1,4 @@
-import { User } from '@domain/index';
+import { User } from '../../domain';
 
 export interface RegisterCommand {
   email: string;

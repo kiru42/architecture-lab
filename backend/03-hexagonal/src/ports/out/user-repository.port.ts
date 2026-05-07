@@ -1,4 +1,4 @@
-import { User } from '@domain/index';
+import { User } from '../../domain';
 
 export interface UserRepositoryPort {
   findByEmail(email: string): Promise<User | null>;
