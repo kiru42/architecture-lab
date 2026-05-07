@@ -62,7 +62,7 @@ BACKEND_URL=http://localhost:3000 npm test
 | 02 | Clean Architecture | ✅ Done | [ADR-0011](docs/adrs/0011-backend-clean-architecture.md) | Excellent testability (mock 4 methods). +67% LOC vs Layered. |
 | 03 | Hexagonal (Ports & Adapters) | ✅ Done | [ADR-0012](docs/adrs/0012-backend-hexagonal.md) | **Same as Clean** with explicit "Ports IN/OUT" naming. |
 | 04 | Onion | ✅ Done | [ADR-0013](docs/adrs/0013-backend-onion.md) | **Same as Clean/Hexagonal** with "concentric layers" metaphor. |
-| 05 | DDD | ⏳ Pending | — | — |
+| 05 | DDD | ✅ Done | [ADR-0014](docs/adrs/0014-backend-ddd.md) | **Bounded Contexts > Layers**. Value Objects = type-safe + validation. 2.5x more code but worth it for complex domains. |
 | 06 | CQRS + Event Sourcing | ⏳ Pending | — | — |
 | 07 | Modular Monolith | ⏳ Pending | — | — |
 
