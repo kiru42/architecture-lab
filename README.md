@@ -58,9 +58,9 @@ BACKEND_URL=http://localhost:3000 npm test
 
 | # | Architecture | Status | ADR | Key Insight |
 |---|---|---|---|---|
-| 01 | Layered / N-tier | 🔄 In Progress | [ADR-0010](docs/adrs/0010-backend-layered.md) | Baseline |
-| 02 | Clean Architecture | ⏳ Pending | — | — |
-| 03 | Hexagonal (Ports & Adapters) | ⏳ Pending | — | — |
+| 01 | Layered / N-tier | ✅ Done | [ADR-0010](docs/adrs/0010-backend-layered.md) | Simple but coupled to Prisma. Mock 20+ methods in tests. |
+| 02 | Clean Architecture | ✅ Done | [ADR-0011](docs/adrs/0011-backend-clean-architecture.md) | Excellent testability (mock 4 methods). +67% LOC vs Layered. |
+| 03 | Hexagonal (Ports & Adapters) | ✅ Done | [ADR-0012](docs/adrs/0012-backend-hexagonal.md) | **Same as Clean** with explicit "Ports IN/OUT" naming. |
 | 04 | Onion | ⏳ Pending | — | — |
 | 05 | DDD | ⏳ Pending | — | — |
 | 06 | CQRS + Event Sourcing | ⏳ Pending | — | — |
@@ -85,6 +85,34 @@ BACKEND_URL=http://localhost:3000 npm test
 - **API:** REST (OpenAPI) + WebSocket
 - **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD), Playwright (E2E)
 - **Infra:** Docker + Docker Compose + GitHub Actions
+
+---
+
+## Key Findings So Far
+
+### Backend Architectures (01-03)
+
+**Layered (Baseline):**
+- ✅ Fast to implement (~100 LOC/feature, 1.5h first feature)
+- ❌ Coupled to Prisma (hard to swap DB)
+- ❌ Tests mock 20+ Prisma methods
+- **Use when:** Small team, simple CRUD, speed matters
+
+**Clean Architecture:**
+- ✅ Excellent testability (mock only 4 repository methods)
+- ✅ Business logic in entities (easy to find and test)
+- ✅ Easy to swap Prisma → MongoDB (new adapter)
+- ❌ +67% LOC vs Layered (~167 LOC/feature)
+- ❌ +67% time first feature (2.5h vs 1.5h)
+- **Use when:** Long-term maintainability > speed, complex business rules
+
+**Hexagonal (Ports & Adapters):**
+- ✅ Same benefits as Clean
+- ✅ Explicit "Ports IN/OUT" vocabulary
+- ⚠️ **Structurally identical to Clean** (just renamed layers)
+- **Use when:** Team prefers Alistair Cockburn vocabulary over Uncle Bob
+
+**Verdict:** Clean ≈ Hexagonal (cosmetic difference). Both superior to Layered for testability, but slower to build.
 
 ---
 
