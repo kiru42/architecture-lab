@@ -1,5 +1,11 @@
 # Architecture Lab — TaskFlow Reference Application
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/Backend-NestJS-ea2845?logo=nestjs)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/Frontend-React_18-61dafb?logo=react)](https://react.dev/)
+[![Implementations](https://img.shields.io/badge/Implementations-11%2F11-success)](docs/comparison-matrix.md)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 > A hands-on comparison of 8+ architectural styles applied to the same reference application.
 
 ## What is this?
