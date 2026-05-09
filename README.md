@@ -1,5 +1,6 @@
 # Architecture Lab — TaskFlow Reference Application
 
+[![CI](https://github.com/kiru42/architecture-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/kiru42/architecture-lab/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![NestJS](https://img.shields.io/badge/Backend-NestJS-ea2845?logo=nestjs)](https://nestjs.com/)
 [![React](https://img.shields.io/badge/Frontend-React_18-61dafb?logo=react)](https://react.dev/)
