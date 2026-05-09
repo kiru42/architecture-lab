@@ -70,10 +70,10 @@ BACKEND_URL=http://localhost:3000 npm test
 
 | # | Architecture | Status | ADR | Key Insight |
 |---|---|---|---|---|
-| 01 | Component-Layered | ⏳ Pending | [ADR-0020](docs/adrs/0020-frontend-component-layered.md) | Baseline: hooks + services pattern |
+| 01 | Component-Layered | ✅ Done | [ADR-0020](docs/adrs/0020-frontend-component-layered.md) | **Baseline: hooks + services pattern**. Simplest structure, fast to build, scales poorly. |
 | 02 | Clean Architecture | ✅ Done | [ADR-0021](docs/adrs/0021-frontend-clean-architecture.md) | **Domain → Application → Infrastructure → Presentation**. Business logic independent of React. High testability but verbose. |
 | 03 | Feature-Sliced Design | ✅ Done | [ADR-0022](docs/adrs/0022-frontend-feature-sliced-design.md) | **6 layers (app → pages → widgets → features → entities → shared)**. Excellent scalability, strict import rules. Zustand for state. |
-| 04 | Atomic Design | ⏳ Pending | [ADR-0023](docs/adrs/0023-frontend-atomic-design.md) | **Atoms → Molecules → Organisms → Templates → Pages**. Design system focus. Great for UI libraries, less for business logic. |
+| 04 | Atomic Design | ✅ Done | [ADR-0023](docs/adrs/0023-frontend-atomic-design.md) | **Atoms → Molecules → Organisms → Templates → Pages**. Design system focus. Great for UI libraries, less for business logic. |
 
 ---
 

@@ -49,10 +49,10 @@ Modular Monolith (130 LOC/feature) ───────────────
 
 | # | Architecture | Files | Layers | Key Principle | Complexity | Scalability | When to Use |
 |---|--------------|-------|--------|---------------|------------|-------------|-------------|
-| **01** | **Component-Layered** | 0 ⏳ | 2 | Hooks + Services (simple folders) | ⭐ Low | ⭐ Poor | Prototypes, solo devs, <10 pages |
+| **01** | **Component-Layered** | 22 ✅ | 2 | Hooks + Services (simple folders) | ⭐ Low | ⭐ Poor | Prototypes, solo devs, <10 pages |
 | **02** | **Clean Architecture** | 27 ✅ | 4 | Domain → Application → Infra → Presentation | ⭐⭐⭐ High | ⭐⭐⭐⭐ Excellent | Framework independence, complex logic |
 | **03** | **Feature-Sliced Design** | 33 ✅ | 6 | app → pages → widgets → features → entities → shared | ⭐⭐⭐ Medium | ⭐⭐⭐⭐⭐ Excellent | Large teams, feature-rich apps, 20+ pages |
-| **04** | **Atomic Design** | 0 ⏳ | 5 | Atoms → Molecules → Organisms → Templates → Pages | ⭐⭐ Medium | ⭐⭐ Medium | Design systems, UI libraries, Storybook |
+| **04** | **Atomic Design** | 28 ✅ | 5 | Atoms → Molecules → Organisms → Templates → Pages | ⭐⭐ Medium | ⭐⭐ Medium | Design systems, UI libraries, Storybook |
 
 ### Frontend Folder Depth Comparison
 
@@ -101,10 +101,10 @@ Atomic Design:         src/components/atoms/Button/...    (5 levels)
 
 | Pattern | Total LOC | Files | LOC per Page |
 |---------|-----------|-------|--------------|
-| Component-Layered | TBD | 0 | TBD |
+| Component-Layered | ~900 | 22 | ~225 |
 | Clean | ~1,100 | 27 | ~275 |
 | FSD | ~1,500 | 33 | ~375 |
-| Atomic | TBD | 0 | TBD |
+| Atomic | ~1,000 | 28 | ~250 |
 
 ### Testing Strategy
 
@@ -183,7 +183,7 @@ Micro-Frontends
 | Category | Complete | In Progress | Not Started |
 |----------|----------|-------------|-------------|
 | **Backends** | 7/7 ✅ | — | — |
-| **Frontends** | 2/4 ✅ | — | 2 (Component-Layered, Atomic) |
+| **Frontends** | 4/4 ✅ | — | — |
 | **ADRs** | 13/13 ✅ | — | — |
 | **E2E Tests** | TBD | — | — |
 
