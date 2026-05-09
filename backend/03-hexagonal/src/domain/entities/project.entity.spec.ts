@@ -29,7 +29,7 @@ describe('Project Entity', () => {
   describe('updateInfo', () => {
     it('should update name and description', () => {
       const project = Project.create('123', 'TaskFlow', 'Old desc', 'user1');
-      
+
       // Small delay to ensure different timestamp
       const updated = project.updateInfo('NewName', 'New desc');
 

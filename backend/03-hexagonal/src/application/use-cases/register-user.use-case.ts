@@ -24,12 +24,7 @@ export class RegisterUserUseCase implements RegisterUserPort {
     }
 
     const passwordHash = await this.hashService.hash(command.password);
-    const user = User.create(
-      crypto.randomUUID(),
-      command.email,
-      passwordHash,
-      command.name,
-    );
+    const user = User.create(crypto.randomUUID(), command.email, passwordHash, command.name);
 
     const created = await this.userRepository.create(user);
     const accessToken = this.jwtService.sign({

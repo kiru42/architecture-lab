@@ -8,12 +8,7 @@ export class Project {
     public readonly updatedAt: Date,
   ) {}
 
-  static create(
-    id: string,
-    name: string,
-    description: string | null,
-    ownerId: string,
-  ): Project {
+  static create(id: string, name: string, description: string | null, ownerId: string): Project {
     const now = new Date();
     return new Project(id, name, description, ownerId, now, now);
   }

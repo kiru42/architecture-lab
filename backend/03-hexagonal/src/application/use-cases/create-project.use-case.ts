@@ -1,10 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { Project } from '../../domain';
-import {
-  CreateProjectCommand,
-  CreateProjectPort,
-  ProjectRepositoryPort,
-} from '../../ports';
+import { CreateProjectCommand, CreateProjectPort, ProjectRepositoryPort } from '../../ports';
 
 @Injectable()
 export class CreateProjectUseCase implements CreateProjectPort {

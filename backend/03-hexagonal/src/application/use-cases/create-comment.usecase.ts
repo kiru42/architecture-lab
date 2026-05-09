@@ -25,11 +25,7 @@ export class CreateCommentUseCase implements ICreateCommentUseCase {
     private readonly projectRepository: IProjectRepository,
   ) {}
 
-  async execute(
-    content: string,
-    taskId: string,
-    userId: string,
-  ): Promise<Comment> {
+  async execute(content: string, taskId: string, userId: string): Promise<Comment> {
     // Verify task exists
     const task = await this.taskRepository.findById(taskId);
     if (!task) {

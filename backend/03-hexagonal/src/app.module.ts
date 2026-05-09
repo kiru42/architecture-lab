@@ -6,12 +6,6 @@ import { ProjectModule } from './modules/projects/project.module';
 import { TaskModule } from './modules/tasks/task.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    PrismaModule,
-    AuthModule,
-    ProjectModule,
-    TaskModule,
-  ],
+  imports: [ConfigModule, PrismaModule, AuthModule, ProjectModule, TaskModule],
 })
 export class AppModule {}

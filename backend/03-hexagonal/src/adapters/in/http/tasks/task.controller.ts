@@ -1,10 +1,6 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { CreateTaskDto, AssignTaskDto } from './task.dto';
-import {
-  CreateTaskPort,
-  AssignTaskPort,
-  ListTasksByProjectPort,
-} from '../../../../ports';
+import { CreateTaskPort, AssignTaskPort, ListTasksByProjectPort } from '../../../../ports';
 import { JwtAuthGuard } from '../../../out/auth/jwt-auth.guard';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 

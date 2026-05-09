@@ -28,11 +28,6 @@ export const TASK_REPOSITORY_PORT = 'TaskRepositoryPort';
       useClass: PrismaTaskRepository,
     },
   ],
-  exports: [
-    PrismaService,
-    USER_REPOSITORY_PORT,
-    PROJECT_REPOSITORY_PORT,
-    TASK_REPOSITORY_PORT,
-  ],
+  exports: [PrismaService, USER_REPOSITORY_PORT, PROJECT_REPOSITORY_PORT, TASK_REPOSITORY_PORT],
 })
 export class PrismaModule {}

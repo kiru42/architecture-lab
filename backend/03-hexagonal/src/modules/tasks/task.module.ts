@@ -1,10 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TaskController } from '../../adapters/in/http/tasks/task.controller';
-import {
-  CreateTaskUseCase,
-  AssignTaskUseCase,
-  ListTasksByProjectUseCase,
-} from '../../application';
+import { CreateTaskUseCase, AssignTaskUseCase, ListTasksByProjectUseCase } from '../../application';
 import { PrismaModule } from '../infrastructure/prisma.module';
 
 export const CREATE_TASK_PORT = 'CreateTaskPort';

@@ -16,10 +16,7 @@ export class SigninUseCase implements ISigninUseCase {
     private readonly jwtService: JwtService,
   ) {}
 
-  async execute(
-    email: string,
-    password: string,
-  ): Promise<{ user: User; token: string }> {
+  async execute(email: string, password: string): Promise<{ user: User; token: string }> {
     // Find user by email
     const user = await this.userRepository.findByEmail(email);
     if (!user) {

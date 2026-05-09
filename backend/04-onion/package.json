@@ -4,6 +4,8 @@
   "description": "Onion Architecture implementation",
   "scripts": {
     "build": "nest build",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
