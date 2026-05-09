@@ -1,7 +1,7 @@
 # ADR 0020: Frontend Architecture - Component-Layered
 
 **Date:** 2025-05-09  
-**Status:** Proposed  
+**Status:** Accepted  
 **Deciders:** Architecture Lab Team
 
 ## Context

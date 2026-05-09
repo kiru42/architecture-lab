@@ -1,6 +1,6 @@
 # ADR-0013: Backend #4 - Onion Architecture
 
-**Status:** ✅ Implemented  
+**Status:** Accepted  
 **Date:** 2026-05-07  
 **Author:** Architecture Lab Experiment
 

@@ -1,7 +1,7 @@
 # ADR 0023: Frontend Architecture - Atomic Design
 
 **Date:** 2025-05-09  
-**Status:** Proposed  
+**Status:** Accepted  
 **Deciders:** Architecture Lab Team
 
 ## Context

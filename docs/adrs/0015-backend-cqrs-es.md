@@ -1,6 +1,6 @@
 # ADR-0015: Backend #6 — CQRS + Event Sourcing
 
-**Status**: ✅ Implemented  
+**Status:** Accepted
 **Date**: 2026-05-07  
 **Decision Makers**: Architecture Lab Team  
 **Tags**: `backend`, `cqrs`, `event-sourcing`, `event-store`, `projections`

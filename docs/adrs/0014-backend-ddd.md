@@ -1,6 +1,6 @@
 # ADR-0014: Backend #5 — Domain-Driven Design (DDD)
 
-**Status**: ✅ Implemented  
+**Status:** Accepted
 **Date**: 2026-05-07  
 **Decision Makers**: Architecture Lab Team  
 **Tags**: `backend`, `ddd`, `bounded-contexts`, `cqrs`, `event-driven`

@@ -1,7 +1,7 @@
 # ADR-0012: Backend #3 — Hexagonal Architecture
 
 **Date:** 2026-05-07  
-**Status:** ✅ Implemented  
+**Status:** Accepted  
 **Architecture:** Hexagonal (Ports & Adapters)
 
 ## Context
