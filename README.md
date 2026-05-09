@@ -64,16 +64,16 @@ BACKEND_URL=http://localhost:3000 npm test
 | 04 | Onion | ✅ Done | [ADR-0013](docs/adrs/0013-backend-onion.md) | **Same as Clean/Hexagonal** with "concentric layers" metaphor. |
 | 05 | DDD | ✅ Done | [ADR-0014](docs/adrs/0014-backend-ddd.md) | **Bounded Contexts > Layers**. Value Objects = type-safe + validation. 2.5x more code but worth it for complex domains. |
 | 06 | CQRS + Event Sourcing | ✅ Done | [ADR-0015](docs/adrs/0015-backend-cqrs-es.md) | **Events = source of truth**. Complete audit trail + temporal queries. Very high complexity, worth it for audit-critical domains. |
-| 07 | Modular Monolith | ⏳ Pending | — | — |
+| 07 | Modular Monolith | ✅ Done | [ADR-0016](docs/adrs/0016-backend-modular-monolith.md) | **Modules > Layers**. Best of monolith (simple ops) + microservices (clear boundaries). Easy migration path. |
 
 ### Frontend
 
 | # | Architecture | Status | ADR | Key Insight |
 |---|---|---|---|---|
-| 01 | Component-Layered | ⏳ Pending | — | Baseline |
-| 02 | Clean Architecture | ⏳ Pending | — | — |
-| 03 | Feature-Sliced Design | ⏳ Pending | — | — |
-| 04 | Atomic-only | ⏳ Pending | — | — |
+| 01 | Component-Layered | ⏳ Pending | [ADR-0020](docs/adrs/0020-frontend-component-layered.md) | Baseline: hooks + services pattern |
+| 02 | Clean Architecture | ✅ Done | [ADR-0021](docs/adrs/0021-frontend-clean-architecture.md) | **Domain → Application → Infrastructure → Presentation**. Business logic independent of React. High testability but verbose. |
+| 03 | Feature-Sliced Design | ✅ Done | [ADR-0022](docs/adrs/0022-frontend-feature-sliced-design.md) | **6 layers (app → pages → widgets → features → entities → shared)**. Excellent scalability, strict import rules. Zustand for state. |
+| 04 | Atomic Design | ⏳ Pending | [ADR-0023](docs/adrs/0023-frontend-atomic-design.md) | **Atoms → Molecules → Organisms → Templates → Pages**. Design system focus. Great for UI libraries, less for business logic. |
 
 ---
 
