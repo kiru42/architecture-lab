@@ -50,6 +50,7 @@ jobs:
         if: steps.check.outputs.exists == 'true' && contains(matrix.component, 'backend')
         working-directory: ${{ matrix.component }}
         run: |
+          mkdir -p prisma
           cp ../../shared/prisma/schema.prisma ./prisma/schema.prisma
           npx prisma generate
 
