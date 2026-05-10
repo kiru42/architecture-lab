@@ -46,6 +46,13 @@ jobs:
         working-directory: ${{ matrix.component }}
         run: npm ci
 
+      - name: Generate Prisma Client (backends only)
+        if: steps.check.outputs.exists == 'true' && contains(matrix.component, 'backend')
+        working-directory: ${{ matrix.component }}
+        run: |
+          cp ../../shared/prisma/schema.prisma ./prisma/schema.prisma
+          npx prisma generate
+
       - name: Lint
         if: steps.check.outputs.exists == 'true'
         working-directory: ${{ matrix.component }}
