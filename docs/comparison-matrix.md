@@ -87,36 +87,41 @@ Atomic Design:         src/components/atoms/Button/...    (5 levels)
 
 ### Code Volume (Backend)
 
-| Pattern | Total LOC | Files | LOC per Feature |
-|---------|-----------|-------|-----------------|
-| Layered | ~800 | 30 | 100 |
-| Clean | ~1,340 | 37 | 167 |
-| Hexagonal | ~1,900 | 79 | 237 |
-| Onion | ~850 | 31 | 106 |
-| DDD | ~2,000 | 49 | 250 |
-| CQRS+ES | ~2,400 | 21 | 300 |
-| Modular Monolith | ~1,040 | 32 | 130 |
+Measured from the tree (source files only; tests counted separately):
+
+| Pattern | LOC | Files | Unit tests |
+|---------|-----|-------|------------|
+| Layered | ~882 | 26 | 14 |
+| Clean | ~1,496 | 53 | 14 |
+| Hexagonal | ~1,524 | 61 | 17 |
+| Onion | ~1,255 | 39 | 14 |
+| DDD | ~2,194 | 78 | 24 |
+| CQRS+ES | ~2,224 | 60 | 9 |
+| Modular Monolith | ~707 | 32 | 23 |
 
 ### Code Volume (Frontend)
 
-| Pattern | Total LOC | Files | LOC per Page |
-|---------|-----------|-------|--------------|
-| Component-Layered | ~900 | 22 | ~225 |
-| Clean | ~1,100 | 27 | ~275 |
-| FSD | ~1,500 | 33 | ~375 |
-| Atomic | ~1,000 | 28 | ~250 |
+| Pattern | LOC | Files | Unit tests |
+|---------|-----|-------|------------|
+| Component-Layered | ~1,418 | 25 | 10 |
+| Clean | ~1,110 | 30 | 10 |
+| FSD | ~1,536 | 36 | 7 |
+| Atomic | ~1,102 | 31 | 8 |
 
 ### Testing Strategy
 
-| Pattern | Unit Tests | Integration Tests | E2E Tests |
-|---------|-----------|-------------------|-----------|
-| **Layered** | Mock Prisma (20+ methods) | Test HTTP endpoints | Cucumber + Playwright |
-| **Clean** | Mock repositories (4 methods) | Test use cases | Cucumber + Playwright |
-| **Hexagonal** | Mock ports (explicit interfaces) | Test adapters | Cucumber + Playwright |
-| **Onion** | Mock outer layer services | Test domain logic | Cucumber + Playwright |
-| **DDD** | Test value objects + aggregates | Test bounded contexts | Cucumber + Playwright |
-| **CQRS+ES** | Test command/query handlers | Test event store | Cucumber + Playwright |
-| **Modular Monolith** | Test module services | Test module integration | Cucumber + Playwright |
+Every backend ships Jest unit tests and passes the same Cucumber.js BDD suite
+(`shared/acceptance`, run by CI against each backend, 34 steps per run).
+
+| Pattern | Unit Tests | Integration Tests | BDD Acceptance |
+|---------|-----------|-------------------|----------------|
+| **Layered** | Mock Prisma (20+ methods) | Test HTTP endpoints | Shared suite |
+| **Clean** | Mock repositories (4 methods) | Test use cases | Shared suite |
+| **Hexagonal** | Mock ports (explicit interfaces) | Test adapters | Shared suite |
+| **Onion** | Mock outer layer services | Test domain logic | Shared suite |
+| **DDD** | Test value objects + aggregates | Test bounded contexts | Shared suite |
+| **CQRS+ES** | Test command/query handlers | Test event store | Shared suite |
+| **Modular Monolith** | Test module services | Test module integration | Shared suite |
 
 ### Team Size Recommendations
 
