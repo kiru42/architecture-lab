@@ -2,18 +2,19 @@
   "name": "@architecture-lab/acceptance",
   "version": "1.0.0",
   "private": true,
-  "description": "BDD acceptance tests for TaskFlow implementations",
+  "description": "Shared BDD acceptance suite — every backend implementation must pass this against the same frozen API contract",
   "scripts": {
     "test": "cucumber-js",
+    "test:websocket": "cucumber-js --profile websocket",
     "test:debug": "cucumber-js --fail-fast"
   },
   "dependencies": {
     "@cucumber/cucumber": "^10.3.1",
-    "@playwright/test": "^1.42.1",
-    "dotenv": "^16.4.5"
+    "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.3"
   }
 }
