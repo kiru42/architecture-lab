@@ -5,7 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-  await app.listen(3007);
-  console.log('🚀 Backend #7 (Modular Monolith) running on http://localhost:3007');
+
+  // Allow the Vite dev servers to call the API directly during local development
+  app.enableCors();
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`🚀 Backend #7 (Modular Monolith) running on http://localhost:${port}`);
 }
 bootstrap();

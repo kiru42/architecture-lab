@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5004';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export const apiClient = {
   async get<T>(endpoint: string): Promise<T> {
