@@ -12,10 +12,10 @@ To isolate architectural differences from tech-stack differences, the programmin
 |---|---|---|
 | Language | TypeScript (strict mode) | Type safety + widely adopted |
 | Backend | NestJS | Mature, DI-native, supports multiple patterns |
-| Frontend | React + React Router v6 + Vite | Industry standard, data router patterns |
+| Frontend | React + React Router + Vite | Industry standard, data router patterns |
 | Database | PostgreSQL via Prisma | Relational constraints + migration stability |
 | API | REST (OpenAPI) + WebSocket | Simple contract, testable, real-time support |
-| Tests | Jest (BE), Vitest (FE), Cucumber, Playwright | Comprehensive coverage |
+| Tests | Jest (BE), Vitest (FE), Cucumber.js (BDD) | Comprehensive coverage |
 | Lint/Format | ESLint (strict) + Prettier | Consistent code style |
 | Infra | Docker Compose | One-command boot for any pair |
 

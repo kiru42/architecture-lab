@@ -8,17 +8,21 @@ This directory contains the frozen contracts that all implementations must confo
 
 - **`openapi.yaml`** — REST API contract + WebSocket events
 - **`prisma/schema.prisma`** — Database schema (PostgreSQL)
-- **`acceptance/`** — BDD scenarios (Cucumber.js + Playwright)
+- **`acceptance/`** — BDD scenarios (Cucumber.js, HTTP only)
 
-## Acceptance Tests (5 scenarios)
+## Acceptance Tests (6 scenarios)
 
-Every implementation must pass all five:
+Every backend must pass all six:
 
-1. ✅ A new user can sign up, sign in, and see an empty dashboard.
-2. ✅ A user can create a project, add three tasks to it, and mark one complete.
-3. ✅ A user can assign a task to another user and that user receives a real-time notification.
-4. ✅ A user can comment on a task and another viewer sees the comment after refresh.
-5. ✅ A user signing in with wrong credentials gets a clear error and is not authenticated.
+1. ✅ `auth` — A new user signs up and sees an empty dashboard.
+2. ✅ `auth` — Signing in with wrong credentials is refused.
+3. ✅ `projects` — A user creates a project, adds three tasks and marks one complete.
+4. ✅ `comments` — The project owner comments on a task and reads it back.
+5. ✅ `comments` — Someone who does not own the project is denied access.
+6. ✅ `notifications` — An assigned task is persisted for the assignee.
+7. 🏷️ `notifications` — *tagged `@websocket`* — The assignee receives a real-time
+   notification. Excluded from the default run because only `01-layered-ntier`
+   exposes a gateway; run it with `npm run test:websocket`.
 
 ## Running Acceptance Tests
 
@@ -28,4 +32,5 @@ npm install
 BACKEND_URL=http://localhost:3000 npm test
 ```
 
-The same test suite runs against every backend implementation.
+The same suite runs against every backend implementation — `./scripts/validate-acceptance.sh`
+boots each one through Docker Compose and runs it, and CI does the same per backend.
