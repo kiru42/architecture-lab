@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Task } from '../types';
 import { taskService } from '../services/taskService';
 
@@ -7,7 +7,7 @@ export function useTasks(projectId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     if (!projectId) {
       setTasks([]);
       return;
@@ -23,11 +23,11 @@ export function useTasks(projectId: string | null) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     loadTasks();
-  }, [projectId]);
+  }, [loadTasks]);
 
   const createTask = async (title: string, description: string, projectId: string) => {
     try {

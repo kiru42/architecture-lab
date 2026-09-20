@@ -27,7 +27,7 @@ export const authService = {
 
   async getProfile() {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/auth/profile`, {
+    const res = await fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Not authenticated');

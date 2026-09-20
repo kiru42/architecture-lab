@@ -7,20 +7,48 @@
 #
 # Each implementation gets a throwaway PostgreSQL and a published 3000, so the
 # suite can run from the host (no rebuild of the acceptance deps per iteration).
+#
+# The script is concurrency-safe: it takes an exclusive lock, so two runs never
+# fight over port 3000, the compose project name or the log directory.
 
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_PORT="${API_PORT:-3000}"
-RESULTS="${RESULTS:-/tmp/architecture-lab-acceptance}/RESULTS.txt"
-OUT_DIR="$(dirname "$RESULTS")"
+OUT_DIR="${RESULTS_DIR:-/tmp/architecture-lab-acceptance}"
+RESULTS="$OUT_DIR/RESULTS.txt"
+LOCKFILE="$OUT_DIR/.lock"
 
 mkdir -p "$OUT_DIR"
+
+# --- concurrency guard -------------------------------------------------------
+exec 9>"$LOCKFILE"
+if ! flock -n 9; then
+  echo "Another acceptance run is already in progress ($LOCKFILE). Aborting."
+  exit 2
+fi
+
 : > "$RESULTS"
+: "${CURRENT_BACKEND:=}"
+
+# Wait until nothing is listening on $API_PORT, so the next backend always talks
+# to *its own* container instead of a previous one still shutting down.
+wait_for_port_free() {
+  for _ in $(seq 1 30); do
+    if ! curl -s -o /dev/null --max-time 1 "http://localhost:$API_PORT/projects"; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
 
 cleanup() {
-  BACKEND="${CURRENT_BACKEND:-01-layered-ntier}" docker compose -f "$ROOT/docker-compose.yml" \
-    down -v --remove-orphans > /dev/null 2>&1 || true
+  if [ -n "$CURRENT_BACKEND" ]; then
+    BACKEND="$CURRENT_BACKEND" docker compose -f "$ROOT/docker-compose.yml" \
+      down -v --remove-orphans > /dev/null 2>&1 || true
+  fi
+  wait_for_port_free || true
 }
 trap cleanup EXIT
 
@@ -40,7 +68,8 @@ for impl in "${BACKENDS[@]}"; do
   cleanup
 
   if ! BACKEND="$impl" docker compose -f "$ROOT/docker-compose.yml" \
-      up -d --build postgres backend > "$OUT_DIR/$impl.compose.log" 2>&1; then
+      up -d --build --force-recreate --remove-orphans postgres backend \
+      > "$OUT_DIR/$impl.compose.log" 2>&1; then
     echo "FAIL  $impl  (stack did not start — see $OUT_DIR/$impl.compose.log)"
     echo "FAIL  $impl" >> "$RESULTS"
     continue
@@ -48,7 +77,7 @@ for impl in "${BACKENDS[@]}"; do
 
   # wait for the API to answer (any HTTP status means the app is up)
   ready=0
-  for _ in $(seq 1 40); do
+  for _ in $(seq 1 60); do
     if curl -s -o /dev/null --max-time 2 "http://localhost:$API_PORT/projects"; then
       ready=1
       break
@@ -70,6 +99,7 @@ for impl in "${BACKENDS[@]}"; do
   else
     echo "FAIL  $impl  (see $OUT_DIR/$impl.log)"
     echo "FAIL  $impl" >> "$RESULTS"
+    docker logs "architecture-lab-backend-1" >> "$OUT_DIR/$impl.log" 2>&1 || true
   fi
 done
 
@@ -80,3 +110,6 @@ echo "----------------------------------------"
 sort "$RESULTS"
 echo "----------------------------------------"
 echo "Logs: $OUT_DIR"
+
+grep -q '^FAIL' "$RESULTS" && exit 1
+exit 0

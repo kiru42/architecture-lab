@@ -10,3 +10,6 @@ coverage/
 *.swo
 .vscode/
 .idea/
+
+# TypeScript incremental build state -- machine-specific, never source
+*.tsbuildinfo

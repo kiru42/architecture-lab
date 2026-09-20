@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Project } from '@domain/entities';
 import { container } from '@infrastructure/di/container';
 import { Header } from '../components/Header';
 import { useAuth } from '../contexts/AuthContext';
+
+// Stable references -- see the note in AuthContext. The container constructs a
+// new use case on every call, which would restart the effect on every render.
+const listProjectsUseCase = container.listProjectsUseCase();
+const createProjectUseCase = container.createProjectUseCase();
+const updateProjectUseCase = container.updateProjectUseCase();
+const deleteProjectUseCase = container.deleteProjectUseCase();
 
 export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -13,12 +20,8 @@ export function ProjectsPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   const { token } = useAuth();
-  const listProjectsUseCase = container.listProjectsUseCase();
-  const createProjectUseCase = container.createProjectUseCase();
-  const updateProjectUseCase = container.updateProjectUseCase();
-  const deleteProjectUseCase = container.deleteProjectUseCase();
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     if (!token) return;
     try {
       setIsLoading(true);
@@ -30,11 +33,11 @@ export function ProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     loadProjects();
-  }, [token]);
+  }, [loadProjects]);
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();

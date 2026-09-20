@@ -14,7 +14,8 @@ export const authApi = {
     return response;
   },
 
-  async getProfile(): Promise<{ user: User }> {
-    return apiClient.get<{ user: User }>('/auth/profile');
+  /** GET /auth/me returns the user object directly (see shared/openapi.yaml). */
+  async getProfile(): Promise<User> {
+    return apiClient.get<User>('/auth/me');
   },
 };

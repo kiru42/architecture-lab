@@ -11,7 +11,7 @@ export function SignupForm() {
     e.preventDefault();
     try {
       await signup(email, name, password);
-    } catch (err) {
+    } catch {
       // Error is handled by useAuth
     }
   };

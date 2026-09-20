@@ -36,7 +36,8 @@ export interface Comment {
   updatedAt: string;
 }
 
+/** Shape returned by POST /auth/signup and /auth/signin. */
 export interface AuthResponse {
   user: User;
-  accessToken: string;
+  token: string;
 }

@@ -16,8 +16,8 @@ export function useAuth() {
       }
 
       try {
-        const { user } = await authService.getProfile();
-        setUser(user);
+        const profile = await authService.getProfile();
+        setUser(profile);
       } catch (err) {
         localStorage.removeItem('token');
         setError(err instanceof Error ? err.message : 'Failed to load user');

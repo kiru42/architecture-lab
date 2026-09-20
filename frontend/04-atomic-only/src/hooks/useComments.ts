@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Comment } from '../types';
 import { commentService } from '../services/commentService';
 
@@ -7,7 +7,7 @@ export function useComments(taskId: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!taskId) {
       setComments([]);
       return;
@@ -23,11 +23,11 @@ export function useComments(taskId: string | null) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [taskId]);
 
   useEffect(() => {
     loadComments();
-  }, [taskId]);
+  }, [loadComments]);
 
   const createComment = async (content: string, taskId: string) => {
     try {

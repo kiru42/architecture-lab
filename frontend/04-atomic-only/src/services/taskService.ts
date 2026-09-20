@@ -24,7 +24,9 @@ export const taskService = {
     return res.json();
   },
 
-  async updateTask(id: string, data: any) {
+  // `any` here used to trip the strict lint gate; the shape is the caller's
+  // business, we only forward it.
+  async updateTask(id: string, data: unknown) {
     const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/tasks/${id}`, {
       method: 'PATCH',

@@ -10,7 +10,7 @@ export function SigninForm() {
     e.preventDefault();
     try {
       await signin(email, password);
-    } catch (err) {
+    } catch {
       // Error is handled by useAuth
     }
   };

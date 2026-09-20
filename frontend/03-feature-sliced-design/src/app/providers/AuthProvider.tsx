@@ -18,8 +18,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       try {
-        const response = await authApi.getProfile();
-        setUser(response.user);
+        const profile = await authApi.getProfile();
+        setUser(profile);
       } catch (err) {
         console.error('Failed to load user:', err);
         localStorage.removeItem('token');

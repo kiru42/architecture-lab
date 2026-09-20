@@ -13,16 +13,19 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// The container hands out a fresh instance on every call. Hoisting them here
+// keeps the references stable between renders, which is what the effect below
+// needs to depend on.
+const isAuthenticatedUseCase = container.isAuthenticatedUseCase();
+const getProfileUseCase = container.getProfileUseCase();
+const signInUseCase = container.signInUseCase();
+const signUpUseCase = container.signUpUseCase();
+const signOutUseCase = container.signOutUseCase();
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const isAuthenticatedUseCase = container.isAuthenticatedUseCase();
-  const getProfileUseCase = container.getProfileUseCase();
-  const signInUseCase = container.signInUseCase();
-  const signUpUseCase = container.signUpUseCase();
-  const signOutUseCase = container.signOutUseCase();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -47,13 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const response = await signInUseCase.execute(email, password);
     setUser(response.user);
-    setToken(response.accessToken);
+    setToken(response.token);
   };
 
   const signUp = async (email: string, name: string, password: string) => {
     const response = await signUpUseCase.execute(email, name, password);
     setUser(response.user);
-    setToken(response.accessToken);
+    setToken(response.token);
   };
 
   const signOut = () => {
