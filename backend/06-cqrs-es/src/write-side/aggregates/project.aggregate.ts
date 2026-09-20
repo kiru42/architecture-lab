@@ -44,12 +44,24 @@ export class Project extends AggregateRoot {
     this.applyEvent(new ProjectUnarchivedEvent(this.id, this._nextVersion()));
   }
 
-  getName(): string | null { return this.name; }
-  isArchived(): boolean { return this.archived; }
-  getUserId(): string | null { return this.userId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  getUpdatedAt(): Date { return this.updatedAt; }
-  isOwnedBy(userId: string): boolean { return this.userId === userId; }
+  getName(): string | null {
+    return this.name;
+  }
+  isArchived(): boolean {
+    return this.archived;
+  }
+  getUserId(): string | null {
+    return this.userId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
+  isOwnedBy(userId: string): boolean {
+    return this.userId === userId;
+  }
 
   private _nextVersion(): number {
     return this.getVersion() + this.getUncommittedEvents().length + 1;

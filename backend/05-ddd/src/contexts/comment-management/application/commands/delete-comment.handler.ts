@@ -9,9 +9,7 @@ import { CommentId } from '../../domain/value-objects/comment-id.vo';
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand> {
-  constructor(
-    @Inject(ICommentRepositoryToken) private readonly repo: ICommentRepository,
-  ) {}
+  constructor(@Inject(ICommentRepositoryToken) private readonly repo: ICommentRepository) {}
 
   async execute(command: DeleteCommentCommand): Promise<void> {
     const comment = await this.repo.findById(CommentId.create(command.commentId));

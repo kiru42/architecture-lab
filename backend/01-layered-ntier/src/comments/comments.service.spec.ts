@@ -155,7 +155,9 @@ describe('CommentsService', () => {
     it('should throw NotFoundException if comment does not exist', async () => {
       mockPrismaService.comment.findUnique.mockResolvedValue(null);
 
-      await expect(service.deleteComment('user1', 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.deleteComment('user1', 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException if user is not the author', async () => {

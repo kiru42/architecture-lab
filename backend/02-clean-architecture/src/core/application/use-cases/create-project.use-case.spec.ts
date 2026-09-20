@@ -13,7 +13,7 @@ describe('CreateProjectUseCase', () => {
       findAllByUserId: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<ProjectRepository>;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -60,9 +60,9 @@ describe('CreateProjectUseCase', () => {
       useCase.execute({
         name: '',
         userId: 'user-123',
-      })
+      }),
     ).rejects.toThrow('Project name cannot be empty');
-    
+
     expect(mockProjectRepo.save).not.toHaveBeenCalled();
   });
 });

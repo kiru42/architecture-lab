@@ -9,7 +9,7 @@ export class PrismaProjectRepository implements ProjectRepository {
   async findById(id: string): Promise<Project | null> {
     const prismaProject = await this.prisma.project.findUnique({ where: { id } });
     if (!prismaProject) return null;
-    
+
     return new Project(
       prismaProject.id,
       prismaProject.name,
@@ -25,15 +25,10 @@ export class PrismaProjectRepository implements ProjectRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    
-    return prismaProjects.map((p: any) => new Project(
-      p.id,
-      p.name,
-      p.archived,
-      p.userId,
-      p.createdAt,
-      p.updatedAt,
-    ));
+
+    return prismaProjects.map(
+      (p) => new Project(p.id, p.name, p.archived, p.userId, p.createdAt, p.updatedAt),
+    );
   }
 
   async save(project: Project): Promise<Project> {

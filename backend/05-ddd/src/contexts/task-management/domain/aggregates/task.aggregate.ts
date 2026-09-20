@@ -119,15 +119,37 @@ export class Task extends AggregateRoot<TaskId> {
     this.updatedAt = new Date();
   }
 
-  getId(): TaskId { return this.id; }
-  getTitle(): string { return this.title; }
-  getDescription(): string | null { return this.description; }
-  getStatus(): TaskStatus { return this.status; }
-  isCompleted(): boolean { return this.status.isDone(); }
-  getDueDate(): Date | null { return this.dueDate; }
-  getProjectId(): string { return this.projectId; }
-  getAssigneeId(): string | null { return this.assigneeId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  getUpdatedAt(): Date { return this.updatedAt; }
-  belongsToProject(projectId: string): boolean { return this.projectId === projectId; }
+  getId(): TaskId {
+    return this.id;
+  }
+  getTitle(): string {
+    return this.title;
+  }
+  getDescription(): string | null {
+    return this.description;
+  }
+  getStatus(): TaskStatus {
+    return this.status;
+  }
+  isCompleted(): boolean {
+    return this.status.isDone();
+  }
+  getDueDate(): Date | null {
+    return this.dueDate;
+  }
+  getProjectId(): string {
+    return this.projectId;
+  }
+  getAssigneeId(): string | null {
+    return this.assigneeId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
+  belongsToProject(projectId: string): boolean {
+    return this.projectId === projectId;
+  }
 }

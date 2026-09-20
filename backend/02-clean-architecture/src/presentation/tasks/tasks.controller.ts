@@ -7,7 +7,7 @@ import {
   ListTasksUseCase,
   UpdateTaskUseCase,
 } from '../../core/application';
-import { UpdateTaskDto } from '../../core/application/dtos/update-task.dto';
+import { AssignTaskRequestDto, CreateTaskRequestDto, UpdateTaskRequestDto } from './task.dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -28,11 +28,11 @@ export class TasksController {
   async create(
     @CurrentUser() user: CurrentUserData,
     @Param('id') projectId: string,
-    @Body() body: { title: string; description?: string },
+    @Body() dto: CreateTaskRequestDto,
   ) {
     return this.createTaskUseCase.execute({
-      title: body.title,
-      description: body.description,
+      title: dto.title,
+      description: dto.description,
       projectId,
       userId: user.userId,
     });
@@ -42,9 +42,15 @@ export class TasksController {
   async update(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
-    @Body() body: UpdateTaskDto,
+    @Body() dto: UpdateTaskRequestDto,
   ) {
-    return this.updateTaskUseCase.execute(id, user.userId, body);
+    return this.updateTaskUseCase.execute(id, user.userId, {
+      title: dto.title,
+      description: dto.description,
+      completed: dto.completed,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      assigneeId: dto.assigneeId,
+    });
   }
 
   /** Kept for the assign flow exercised by notifications.feature. */
@@ -52,11 +58,11 @@ export class TasksController {
   async assign(
     @CurrentUser() user: CurrentUserData,
     @Param('taskId') taskId: string,
-    @Body() body: { assigneeId: string },
+    @Body() dto: AssignTaskRequestDto,
   ) {
     return this.assignTaskUseCase.execute({
       taskId,
-      assigneeId: body.assigneeId,
+      assigneeId: dto.assigneeId,
       userId: user.userId,
     });
   }

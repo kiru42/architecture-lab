@@ -9,7 +9,6 @@ describe('TasksService', () => {
   let service: TasksService;
   let prisma: PrismaService;
   let projectsService: ProjectsService;
-  let notificationsGateway: NotificationsGateway;
 
   const mockPrismaService = {
     task: {

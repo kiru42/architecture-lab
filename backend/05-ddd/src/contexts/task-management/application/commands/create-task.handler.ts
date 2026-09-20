@@ -32,12 +32,7 @@ export class CreateTaskHandler implements ICommandHandler<CreateTaskCommand> {
       throw new ForbiddenException('Access denied');
     }
 
-    const task = Task.create(
-      TaskId.generate(),
-      command.title,
-      command.projectId,
-      command.options,
-    );
+    const task = Task.create(TaskId.generate(), command.title, command.projectId, command.options);
 
     await this.repo.save(task);
     task.getDomainEvents().forEach((event) => this.eventBus.publish(event));

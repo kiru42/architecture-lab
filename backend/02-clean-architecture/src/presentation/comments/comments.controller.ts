@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserData } from '../decorators/current-user.decorator';
 import {
@@ -15,6 +6,7 @@ import {
   DeleteCommentUseCase,
   ListCommentsUseCase,
 } from '../../core/application';
+import { CreateCommentRequestDto } from './comment.dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -34,10 +26,10 @@ export class CommentsController {
   async create(
     @CurrentUser() user: CurrentUserData,
     @Param('id') taskId: string,
-    @Body() body: { content: string },
+    @Body() dto: CreateCommentRequestDto,
   ) {
     return this.createCommentUseCase.execute({
-      content: body.content,
+      content: dto.content,
       taskId,
       userId: user.userId,
     });

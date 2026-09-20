@@ -1,7 +1,6 @@
 import {
   WebSocketGateway,
   WebSocketServer,
-  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
@@ -27,8 +26,10 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.replace('Bearer ', '');
-      
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.replace('Bearer ', '');
+
       if (!token) {
         client.disconnect();
         return;

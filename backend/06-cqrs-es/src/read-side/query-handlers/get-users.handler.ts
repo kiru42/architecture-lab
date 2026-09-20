@@ -7,7 +7,7 @@ import { UserReadModel } from '../projections/user-read-model';
 export class GetUsersHandler implements IQueryHandler<GetUsersQuery> {
   constructor(private readonly readRepo: InMemoryUserReadRepository) {}
 
-  async execute(query: GetUsersQuery): Promise<UserReadModel[]> {
+  async execute(): Promise<UserReadModel[]> {
     return this.readRepo.findAll();
   }
 }

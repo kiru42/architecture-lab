@@ -58,11 +58,7 @@ export class TaskReopenedEvent extends TaskEvent {
 }
 
 export class TaskAssignedEvent extends TaskEvent {
-  constructor(
-    aggregateId: string,
-    assigneeId: string | null,
-    version = 1,
-  ) {
+  constructor(aggregateId: string, assigneeId: string | null, version = 1) {
     super(aggregateId, 'TaskAssigned', version, { assigneeId });
   }
 }

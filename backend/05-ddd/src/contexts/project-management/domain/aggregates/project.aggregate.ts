@@ -63,11 +63,25 @@ export class Project extends AggregateRoot<ProjectId> {
     this.updatedAt = new Date();
   }
 
-  getId(): ProjectId { return this.id; }
-  getName(): ProjectName { return this.name; }
-  isArchived(): boolean { return this.archived; }
-  getUserId(): string { return this.userId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  getUpdatedAt(): Date { return this.updatedAt; }
-  isOwnedBy(userId: string): boolean { return this.userId === userId; }
+  getId(): ProjectId {
+    return this.id;
+  }
+  getName(): ProjectName {
+    return this.name;
+  }
+  isArchived(): boolean {
+    return this.archived;
+  }
+  getUserId(): string {
+    return this.userId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
+  isOwnedBy(userId: string): boolean {
+    return this.userId === userId;
+  }
 }

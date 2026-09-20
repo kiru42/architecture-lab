@@ -41,9 +41,7 @@ describe('InMemoryEventStore', () => {
 
     // Try to append with wrong expected version
     const event2: IEvent = { ...event1, eventId: 'e2', version: 2 };
-    await expect(eventStore.appendEvents('agg1', [event2], 0)).rejects.toThrow(
-      'Version conflict',
-    );
+    await expect(eventStore.appendEvents('agg1', [event2], 0)).rejects.toThrow('Version conflict');
   });
 
   it('should get events from specific version', async () => {

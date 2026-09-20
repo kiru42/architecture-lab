@@ -10,9 +10,7 @@ import { UserId } from '../../domain/value-objects/user-id.vo';
 
 @QueryHandler(GetProfileQuery)
 export class GetProfileHandler implements IQueryHandler<GetProfileQuery> {
-  constructor(
-    @Inject(IUserRepositoryToken) private readonly userRepository: IUserRepository,
-  ) {}
+  constructor(@Inject(IUserRepositoryToken) private readonly userRepository: IUserRepository) {}
 
   async execute(query: GetProfileQuery): Promise<User> {
     const user = await this.userRepository.findById(UserId.create(query.userId));

@@ -80,7 +80,12 @@ export class AuthService {
     });
   }
 
-  private sanitizeUser(user: { id: string; email: string; name: string; createdAt: Date }): UserResponseDto {
+  private sanitizeUser(user: {
+    id: string;
+    email: string;
+    name: string;
+    createdAt: Date;
+  }): UserResponseDto {
     return {
       id: user.id,
       email: user.email,

@@ -15,17 +15,17 @@ export class CreateTaskUseCase {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
-    
+
     if (!project.isOwnedBy(dto.userId)) {
       throw new ForbiddenException('You do not own this project');
     }
-    
+
     // Create domain entity
     const task = Task.create(dto.title, dto.projectId, dto.description);
-    
+
     // Persist
     const saved = await this.taskRepository.save(task);
-    
+
     return {
       id: saved.id,
       title: saved.title,

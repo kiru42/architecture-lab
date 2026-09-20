@@ -30,12 +30,24 @@ export class Comment extends AggregateRoot {
     this.applyEvent(new CommentDeletedEvent(this.id, this._nextVersion()));
   }
 
-  getContent(): string | null { return this.content; }
-  getTaskId(): string | null { return this.taskId; }
-  getAuthorId(): string | null { return this.authorId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  isDeleted(): boolean { return this.deleted; }
-  isAuthoredBy(userId: string): boolean { return this.authorId === userId; }
+  getContent(): string | null {
+    return this.content;
+  }
+  getTaskId(): string | null {
+    return this.taskId;
+  }
+  getAuthorId(): string | null {
+    return this.authorId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  isDeleted(): boolean {
+    return this.deleted;
+  }
+  isAuthoredBy(userId: string): boolean {
+    return this.authorId === userId;
+  }
 
   private _nextVersion(): number {
     return this.getVersion() + this.getUncommittedEvents().length + 1;

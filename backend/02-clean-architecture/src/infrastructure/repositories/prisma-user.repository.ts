@@ -9,7 +9,7 @@ export class PrismaUserRepository implements UserRepository {
   async findById(id: string): Promise<User | null> {
     const prismaUser = await this.prisma.user.findUnique({ where: { id } });
     if (!prismaUser) return null;
-    
+
     return new User(
       prismaUser.id,
       prismaUser.email,
@@ -21,11 +21,11 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const prismaUser = await this.prisma.user.findUnique({ 
-      where: { email: email.toLowerCase() } 
+    const prismaUser = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
     });
     if (!prismaUser) return null;
-    
+
     return new User(
       prismaUser.id,
       prismaUser.email,

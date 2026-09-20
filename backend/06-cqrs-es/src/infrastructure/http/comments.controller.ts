@@ -1,16 +1,10 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { v4 as uuid } from 'uuid';
-import { AddCommentCommand, DeleteCommentCommand } from '../../write-side/commands/comment.commands';
+import {
+  AddCommentCommand,
+  DeleteCommentCommand,
+} from '../../write-side/commands/comment.commands';
 import { GetCommentsQuery } from '../../read-side/queries/comment.queries';
 import { CommentReadModel } from '../../read-side/projections/comment-read-model';
 import { JwtAuthGuard } from './jwt-auth.guard';

@@ -15,15 +15,9 @@ import { ProjectReadModel } from '../projections/project-read-model';
   ProjectArchivedEvent,
   ProjectUnarchivedEvent,
 )
-export class ProjectProjection
-  implements
-    IEventHandler<
-      | ProjectCreatedEvent
-      | ProjectRenamedEvent
-      | ProjectArchivedEvent
-      | ProjectUnarchivedEvent
-    >
-{
+export class ProjectProjection implements IEventHandler<
+  ProjectCreatedEvent | ProjectRenamedEvent | ProjectArchivedEvent | ProjectUnarchivedEvent
+> {
   constructor(private readonly readRepo: InMemoryProjectReadRepository) {}
 
   handle(

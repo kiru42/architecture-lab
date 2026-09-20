@@ -9,7 +9,7 @@ describe('User Aggregate (Event Sourced)', () => {
     expect(user.getEmail()).toBe('test@example.com');
     expect(user.getName()).toBe('John Doe');
     expect(user.getVersion()).toBe(0); // version incremented by event store, not aggregate
-    
+
     const events = user.getUncommittedEvents();
     expect(events).toHaveLength(1);
     expect(events[0].eventType).toBe('UserRegistered');

@@ -5,10 +5,7 @@ import {
   IUserRepository,
   IUserRepository as IUserRepositoryToken,
 } from '../../domain/repositories/user.repository';
-import {
-  IHashService,
-  IHashService as IHashServiceToken,
-} from '../ports/hash-service.port';
+import { IHashService, IHashService as IHashServiceToken } from '../ports/hash-service.port';
 import { IJwtService, IJwtService as IJwtServiceToken } from '../ports/jwt-service.port';
 import { Email } from '../../../../shared-kernel/domain/value-objects/email.vo';
 import { User } from '../../domain/aggregates/user.aggregate';
@@ -40,6 +37,12 @@ export class SigninHandler implements ICommandHandler<SigninCommand> {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return { user, token: this.jwtService.sign({ sub: user.getId().getValue(), email: user.getEmail().getValue() }) };
+    return {
+      user,
+      token: this.jwtService.sign({
+        sub: user.getId().getValue(),
+        email: user.getEmail().getValue(),
+      }),
+    };
   }
 }

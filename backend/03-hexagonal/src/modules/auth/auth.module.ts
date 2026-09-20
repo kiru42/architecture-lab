@@ -4,11 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { AuthController } from '../../adapters/in/http/auth/auth.controller';
 import { JwtStrategy } from '../../adapters/out/auth';
-import {
-  GetProfileUseCase,
-  SigninUseCase,
-  SignupUseCase,
-} from '../../application/use-cases';
+import { GetProfileUseCase, SigninUseCase, SignupUseCase } from '../../application/use-cases';
 import { PrismaModule } from '../infrastructure/prisma.module';
 import { ISignupUseCase } from '../../domain/ports/primary/signup.usecase.interface';
 import { ISigninUseCase } from '../../domain/ports/primary/signin.usecase.interface';

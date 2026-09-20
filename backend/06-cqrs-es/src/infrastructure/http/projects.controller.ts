@@ -31,9 +31,7 @@ export class ProjectsController {
 
   @Get()
   async list(@CurrentUser('userId') userId: string) {
-    const projects: ProjectReadModel[] = await this.queryBus.execute(
-      new GetProjectsQuery(userId),
-    );
+    const projects: ProjectReadModel[] = await this.queryBus.execute(new GetProjectsQuery(userId));
     return projects.map(toResponse);
   }
 
@@ -42,9 +40,7 @@ export class ProjectsController {
     const projectId = uuid();
     await this.commandBus.execute(new CreateProjectCommand(projectId, dto.name, userId));
 
-    const projects: ProjectReadModel[] = await this.queryBus.execute(
-      new GetProjectsQuery(userId),
-    );
+    const projects: ProjectReadModel[] = await this.queryBus.execute(new GetProjectsQuery(userId));
     return toResponse(projects.find((p) => p.id === projectId)!);
   }
 
@@ -56,9 +52,7 @@ export class ProjectsController {
   ) {
     await this.commandBus.execute(new UpdateProjectCommand(id, userId, dto));
 
-    const projects: ProjectReadModel[] = await this.queryBus.execute(
-      new GetProjectsQuery(userId),
-    );
+    const projects: ProjectReadModel[] = await this.queryBus.execute(new GetProjectsQuery(userId));
     return toResponse(projects.find((p) => p.id === id)!);
   }
 }

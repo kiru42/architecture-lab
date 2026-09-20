@@ -38,10 +38,22 @@ export class Comment extends AggregateRoot<CommentId> {
     return this.authorId === userId;
   }
 
-  getId(): CommentId { return this.id; }
-  getContent(): CommentContent { return this.content; }
-  getTaskId(): string { return this.taskId; }
-  getAuthorId(): string { return this.authorId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  getUpdatedAt(): Date { return this.updatedAt; }
+  getId(): CommentId {
+    return this.id;
+  }
+  getContent(): CommentContent {
+    return this.content;
+  }
+  getTaskId(): string {
+    return this.taskId;
+  }
+  getAuthorId(): string {
+    return this.authorId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
 }

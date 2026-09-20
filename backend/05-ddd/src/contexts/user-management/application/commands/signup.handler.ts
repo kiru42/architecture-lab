@@ -36,9 +36,7 @@ export class SignupHandler implements ICommandHandler<SignupCommand> {
       throw new ConflictException('User with this email already exists');
     }
 
-    const hashedPassword = HashedPassword.fromHash(
-      await this.hashService.hash(command.password),
-    );
+    const hashedPassword = HashedPassword.fromHash(await this.hashService.hash(command.password));
     const user = User.register(
       UserId.generate(),
       email,

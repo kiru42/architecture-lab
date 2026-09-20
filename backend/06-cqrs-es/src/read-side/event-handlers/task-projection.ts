@@ -17,12 +17,9 @@ import { TaskReadModel } from '../projections/task-read-model';
   TaskReopenedEvent,
   TaskAssignedEvent,
 )
-export class TaskProjection
-  implements
-    IEventHandler<
-      TaskCreatedEvent | TaskUpdatedEvent | TaskCompletedEvent | TaskReopenedEvent | TaskAssignedEvent
-    >
-{
+export class TaskProjection implements IEventHandler<
+  TaskCreatedEvent | TaskUpdatedEvent | TaskCompletedEvent | TaskReopenedEvent | TaskAssignedEvent
+> {
   constructor(private readonly readRepo: InMemoryTaskReadRepository) {}
 
   handle(

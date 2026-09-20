@@ -24,8 +24,6 @@ export class CreateCommentUseCase {
       throw new ForbiddenException('Access denied');
     }
 
-    return this.commentRepository.save(
-      Comment.create(dto.content, dto.taskId, dto.userId),
-    );
+    return this.commentRepository.save(Comment.create(dto.content, dto.taskId, dto.userId));
   }
 }

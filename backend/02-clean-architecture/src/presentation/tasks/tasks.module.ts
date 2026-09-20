@@ -9,11 +9,6 @@ import { TasksController } from './tasks.controller';
 
 @Module({
   controllers: [TasksController],
-  providers: [
-    CreateTaskUseCase,
-    ListTasksUseCase,
-    AssignTaskUseCase,
-    UpdateTaskUseCase,
-  ],
+  providers: [CreateTaskUseCase, ListTasksUseCase, AssignTaskUseCase, UpdateTaskUseCase],
 })
 export class TasksModule {}

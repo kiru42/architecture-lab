@@ -1,7 +1,14 @@
 import { Test } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { AssignTaskUseCase } from './assign-task.use-case';
-import { TaskRepository, ProjectRepository, UserRepository, Task, Project, User } from '../../domain';
+import {
+  TaskRepository,
+  ProjectRepository,
+  UserRepository,
+  Task,
+  Project,
+  User,
+} from '../../domain';
 
 describe('AssignTaskUseCase', () => {
   let useCase: AssignTaskUseCase;
@@ -15,21 +22,21 @@ describe('AssignTaskUseCase', () => {
       findAllByProjectId: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<TaskRepository>;
 
     mockProjectRepo = {
       findById: jest.fn(),
       findAllByUserId: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<ProjectRepository>;
 
     mockUserRepo = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<UserRepository>;
 
     const module = await Test.createTestingModule({
       providers: [
@@ -96,7 +103,7 @@ describe('AssignTaskUseCase', () => {
         taskId: 'invalid',
         assigneeId: 'assignee-123',
         userId: 'user-123',
-      })
+      }),
     ).rejects.toThrow(NotFoundException);
   });
 
@@ -129,7 +136,7 @@ describe('AssignTaskUseCase', () => {
         taskId: 'task-123',
         assigneeId: 'assignee-123',
         userId: 'attacker-123', // Not the owner
-      })
+      }),
     ).rejects.toThrow(ForbiddenException);
   });
 
@@ -163,7 +170,7 @@ describe('AssignTaskUseCase', () => {
         taskId: 'task-123',
         assigneeId: 'invalid',
         userId: 'owner-123',
-      })
+      }),
     ).rejects.toThrow(NotFoundException);
   });
 });

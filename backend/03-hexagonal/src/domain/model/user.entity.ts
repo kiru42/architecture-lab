@@ -23,9 +23,18 @@ export class User {
     this.updatedAt = data.updatedAt;
   }
 
-  // Domain method to get user without password
-  toPublic() {
-    const { password, ...publicUser } = this;
-    return publicUser;
+  /**
+   * The only representation of a user allowed to leave the application.
+   * The projection is built field by field, so the password hash is not merely
+   * omitted from the JSON — it is not reachable here at all.
+   */
+  toPublic(): { id: string; email: string; name: string; createdAt: Date; updatedAt: Date } {
+    return {
+      id: this.id,
+      email: this.email,
+      name: this.name,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+    };
   }
 }

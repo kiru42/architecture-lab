@@ -21,12 +21,6 @@ import {
     { provide: TaskRepository, useClass: PrismaTaskRepository },
     { provide: CommentRepository, useClass: PrismaCommentRepository },
   ],
-  exports: [
-    PrismaService,
-    UserRepository,
-    ProjectRepository,
-    TaskRepository,
-    CommentRepository,
-  ],
+  exports: [PrismaService, UserRepository, ProjectRepository, TaskRepository, CommentRepository],
 })
 export class InfrastructureModule {}

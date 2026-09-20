@@ -15,12 +15,7 @@ export class User extends AggregateRoot {
   /**
    * Factory: Create new user (emits UserRegisteredEvent)
    */
-  static register(
-    id: string,
-    email: string,
-    hashedPassword: string,
-    name: string,
-  ): User {
+  static register(id: string, email: string, hashedPassword: string, name: string): User {
     const user = new User(id);
     const event = new UserRegisteredEvent(id, email, hashedPassword, name, 1);
     user.applyEvent(event);

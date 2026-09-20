@@ -6,7 +6,7 @@ import {
   ListProjectsUseCase,
   UpdateProjectUseCase,
 } from '../../core/application';
-import { UpdateProjectDto } from '../../core/application/dtos/update-project.dto';
+import { CreateProjectRequestDto, UpdateProjectRequestDto } from './project.dto';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
@@ -23,16 +23,16 @@ export class ProjectsController {
   }
 
   @Post()
-  async create(@CurrentUser() user: CurrentUserData, @Body() body: { name: string }) {
-    return this.createProjectUseCase.execute({ name: body.name, userId: user.userId });
+  async create(@CurrentUser() user: CurrentUserData, @Body() dto: CreateProjectRequestDto) {
+    return this.createProjectUseCase.execute({ name: dto.name, userId: user.userId });
   }
 
   @Patch(':id')
   async update(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
-    @Body() body: UpdateProjectDto,
+    @Body() dto: UpdateProjectRequestDto,
   ) {
-    return this.updateProjectUseCase.execute(id, user.userId, body);
+    return this.updateProjectUseCase.execute(id, user.userId, dto);
   }
 }

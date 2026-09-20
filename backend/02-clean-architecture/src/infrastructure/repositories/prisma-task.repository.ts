@@ -9,7 +9,7 @@ export class PrismaTaskRepository implements TaskRepository {
   async findById(id: string): Promise<Task | null> {
     const prismaTask = await this.prisma.task.findUnique({ where: { id } });
     if (!prismaTask) return null;
-    
+
     return new Task(
       prismaTask.id,
       prismaTask.title,
@@ -28,18 +28,21 @@ export class PrismaTaskRepository implements TaskRepository {
       where: { projectId },
       orderBy: { createdAt: 'desc' },
     });
-    
-    return prismaTasks.map((t: any) => new Task(
-      t.id,
-      t.title,
-      t.description,
-      t.completed,
-      t.dueDate,
-      t.projectId,
-      t.assigneeId,
-      t.createdAt,
-      t.updatedAt,
-    ));
+
+    return prismaTasks.map(
+      (t) =>
+        new Task(
+          t.id,
+          t.title,
+          t.description,
+          t.completed,
+          t.dueDate,
+          t.projectId,
+          t.assigneeId,
+          t.createdAt,
+          t.updatedAt,
+        ),
+    );
   }
 
   async save(task: Task): Promise<Task> {

@@ -8,8 +8,8 @@ export class ListProjectsUseCase {
 
   async execute(userId: string): Promise<CreateProjectResultDto[]> {
     const projects = await this.projectRepository.findAllByUserId(userId);
-    
-    return projects.map(p => ({
+
+    return projects.map((p) => ({
       id: p.id,
       name: p.name,
       archived: p.archived,

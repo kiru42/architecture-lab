@@ -23,11 +23,7 @@ export class ProjectsService {
     });
   }
 
-  async updateProject(
-    userId: string,
-    projectId: string,
-    dto: UpdateProjectDto,
-  ): Promise<Project> {
+  async updateProject(userId: string, projectId: string, dto: UpdateProjectDto): Promise<Project> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });

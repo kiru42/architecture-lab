@@ -46,13 +46,6 @@ export class PrismaCommentRepository implements CommentRepository {
     createdAt: Date;
     updatedAt: Date;
   }): Comment {
-    return new Comment(
-      row.id,
-      row.content,
-      row.taskId,
-      row.authorId,
-      row.createdAt,
-      row.updatedAt,
-    );
+    return new Comment(row.id, row.content, row.taskId, row.authorId, row.createdAt, row.updatedAt);
   }
 }

@@ -26,7 +26,11 @@ export class Task extends AggregateRoot {
     id: string,
     title: string,
     projectId: string,
-    options: { description?: string | null; dueDate?: Date | null; assigneeId?: string | null } = {},
+    options: {
+      description?: string | null;
+      dueDate?: Date | null;
+      assigneeId?: string | null;
+    } = {},
   ): Task {
     const task = new Task(id);
     task.applyEvent(
@@ -70,14 +74,30 @@ export class Task extends AggregateRoot {
     this.applyEvent(new TaskAssignedEvent(this.id, assigneeId, this._nextVersion()));
   }
 
-  getTitle(): string | null { return this.title; }
-  getDescription(): string | null { return this.description; }
-  isCompleted(): boolean { return this.completed; }
-  getDueDate(): Date | null { return this.dueDate; }
-  getProjectId(): string | null { return this.projectId; }
-  getAssigneeId(): string | null { return this.assigneeId; }
-  getCreatedAt(): Date { return this.createdAt; }
-  getUpdatedAt(): Date { return this.updatedAt; }
+  getTitle(): string | null {
+    return this.title;
+  }
+  getDescription(): string | null {
+    return this.description;
+  }
+  isCompleted(): boolean {
+    return this.completed;
+  }
+  getDueDate(): Date | null {
+    return this.dueDate;
+  }
+  getProjectId(): string | null {
+    return this.projectId;
+  }
+  getAssigneeId(): string | null {
+    return this.assigneeId;
+  }
+  getCreatedAt(): Date {
+    return this.createdAt;
+  }
+  getUpdatedAt(): Date {
+    return this.updatedAt;
+  }
 
   private _nextVersion(): number {
     return this.getVersion() + this.getUncommittedEvents().length + 1;

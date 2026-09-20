@@ -65,12 +65,7 @@ const QueryHandlers = [
   GetCommentsHandler,
 ];
 
-const EventHandlers = [
-  UserRegisteredHandler,
-  ProjectProjection,
-  TaskProjection,
-  CommentProjection,
-];
+const EventHandlers = [UserRegisteredHandler, ProjectProjection, TaskProjection, CommentProjection];
 
 @Module({
   imports: [

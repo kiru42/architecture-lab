@@ -38,8 +38,17 @@ export class AuthService {
     return this.toPublicUser(user);
   }
 
-  private toPublicUser(user: User): Omit<User, 'password'> {
-    const { password, ...rest } = user;
-    return rest;
+  /**
+   * The only user representation that leaves the module. Built field by field,
+   * so the password hash is not reachable from the caller at all.
+   */
+  private toPublicUser(user: User) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

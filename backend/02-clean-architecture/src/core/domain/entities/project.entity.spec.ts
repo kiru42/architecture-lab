@@ -11,15 +11,11 @@ describe('Project Entity', () => {
     });
 
     it('should throw error for empty name', () => {
-      expect(() => Project.create('', 'user-123')).toThrow(
-        'Project name cannot be empty',
-      );
+      expect(() => Project.create('', 'user-123')).toThrow('Project name cannot be empty');
     });
 
     it('should throw error for whitespace-only name', () => {
-      expect(() => Project.create('   ', 'user-123')).toThrow(
-        'Project name cannot be empty',
-      );
+      expect(() => Project.create('   ', 'user-123')).toThrow('Project name cannot be empty');
     });
   });
 
@@ -48,9 +44,7 @@ describe('Project Entity', () => {
     it('should throw error for empty name', () => {
       const project = Project.create('Old Name', 'user-123');
 
-      expect(() => project.rename('')).toThrow(
-        'Project name cannot be empty',
-      );
+      expect(() => project.rename('')).toThrow('Project name cannot be empty');
     });
   });
 
