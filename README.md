@@ -69,6 +69,14 @@ architecture-lab/
 ├── docs/
 │   ├── adrs/            # Architecture Decision Records
 │   └── comparison-matrix.md
+├── docker/              # Generic Dockerfiles shared by all implementations
+│   ├── backend.Dockerfile
+│   ├── frontend.Dockerfile
+│   ├── backend-entrypoint.sh
+│   └── nginx.conf
+├── scripts/
+│   ├── sync-prisma-schema.sh      # Push shared/prisma into every backend
+│   └── validate-docker-builds.sh  # Build every image, print a pass/fail matrix
 └── docker-compose.yml   # Boot any backend+frontend pair
 ```
 
@@ -94,13 +102,22 @@ cd architecture-lab
 # Example: Layered architecture backend
 cd backend/01-layered-ntier
 npm install
-docker compose up -d postgres  # Start PostgreSQL
-npx prisma migrate dev         # Run migrations
-npm run start:dev              # Start NestJS
+docker compose up -d postgres   # Start PostgreSQL (or any local instance)
+cp .env.example .env            # then set DATABASE_URL  (see note below)
+npm run prisma:generate         # Generate the Prisma client
+npm run prisma:migrate          # Apply migrations from ./prisma
+npm run start:dev               # Start NestJS
 
 # API available at http://localhost:3000
-# Swagger docs at http://localhost:3000/api
 ```
+
+Every backend ships its own `prisma/schema.prisma` + `prisma/migrations`, copied
+from `shared/prisma` by `./scripts/sync-prisma-schema.sh`. That directory
+contains the **frozen** schema — never edit a backend copy by hand, edit
+`shared/prisma` and re-run the sync script.
+
+To run a second implementation at the same time, point it somewhere else with
+`PORT=3010 npm run start:dev` — all backends read `PORT` and default to `3000`.
 
 ### Running Any Frontend
 
@@ -118,13 +135,29 @@ npm run dev  # Starts on http://localhost:5002
 
 ```bash
 # Boot any backend+frontend pair
-BACKEND=01-layered-ntier FRONTEND=01-component-layered docker compose up
+BACKEND=01-layered-ntier FRONTEND=01-component-layered docker compose up --build
+
+# Frontend  → http://localhost:5173   (nginx, proxies /api to the backend)
+# Backend   → http://localhost:3000
+# Postgres  → localhost:5432 (taskflow / taskflow / taskflow)
 
 # Available combinations:
-# BACKEND: 01-layered-ntier, 02-clean-architecture, 03-hexagonal, 
+# BACKEND: 01-layered-ntier, 02-clean-architecture, 03-hexagonal,
 #          04-onion, 05-ddd, 06-cqrs-es, 07-modular-monolith
-# FRONTEND: 01-component-layered, 02-clean-architecture, 
+# FRONTEND: 01-component-layered, 02-clean-architecture,
 #           03-feature-sliced-design, 04-atomic-only
+```
+
+Both Dockerfiles are generic and parameterised (`BACKEND_DIR` / `FRONTEND_DIR`),
+so there is exactly one backend image recipe and one frontend image recipe for
+all eleven implementations. Every frontend reaches the API through the same
+relative `/api` prefix — Vite proxies it in dev, nginx proxies it in Docker.
+
+To check that every image still builds:
+
+```bash
+./scripts/validate-docker-builds.sh          # all 11
+./scripts/validate-docker-builds.sh backend  # backends only
 ```
 
 ### Running Tests
@@ -140,7 +173,12 @@ npm test
 
 # E2E acceptance tests (against any running backend)
 cd shared/acceptance
+npm install
 BACKEND_URL=http://localhost:3000 npm test
+
+# ...or let Docker orchestrate backend + Postgres + acceptance runner:
+BACKEND=02-clean-architecture docker compose -f docker-compose.test.yml \
+  up --build --abort-on-container-exit --exit-code-from acceptance
 ```
 
 ---
