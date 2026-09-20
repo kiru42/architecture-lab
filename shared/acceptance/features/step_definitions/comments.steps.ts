@@ -3,7 +3,9 @@ import { strict as assert } from 'assert';
 import { TaskFlowWorld } from '../support/world';
 
 Given('user {string} exists', async function (this: TaskFlowWorld, email: string) {
-  const result = await this.signUp(email, 'User', 'password123');
+  // Idempotent: two scenarios may both declare the same user, and the database
+  // survives between them inside a single run.
+  const result = await this.signInOrSignUp(email, 'password123', 'User');
   this.users[email] = result.user;
   this.token = null;
   this.currentUser = null;
