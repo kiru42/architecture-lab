@@ -13,9 +13,11 @@ async function bootstrap() {
     }),
   );
 
+  // Allow the Vite dev servers to call the API directly during local development
   app.enableCors();
 
-  const port = process.env.PORT || 3003;
+  // Every TaskFlow backend listens on PORT and defaults to 3000 (see openapi.yaml)
+  const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`🚀 Hexagonal backend running on http://localhost:${port}`);
 }

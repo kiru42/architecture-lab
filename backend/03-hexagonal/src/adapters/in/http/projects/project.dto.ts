@@ -1,11 +1,16 @@
-import { IsString, IsOptional, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
-  @MinLength(3)
   name: string;
+}
 
+export class UpdateProjectDto {
   @IsOptional()
   @IsString()
-  description?: string;
+  name?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  archived?: boolean;
 }

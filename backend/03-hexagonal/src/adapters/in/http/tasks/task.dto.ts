@@ -1,27 +1,40 @@
-import { IsString, IsOptional, IsEnum, IsDateString, MinLength } from 'class-validator';
-import { TaskPriority } from '../../../../domain';
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreateTaskDto {
   @IsString()
-  @MinLength(3)
   title: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
-  @IsEnum(TaskPriority)
-  priority: TaskPriority;
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
 
+  @IsOptional()
   @IsString()
-  projectId: string;
+  assigneeId?: string;
+}
+
+export class UpdateTaskDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  completed?: boolean;
 
   @IsOptional()
   @IsDateString()
   dueDate?: string;
-}
 
-export class AssignTaskDto {
+  @IsOptional()
   @IsString()
-  assignedToId: string;
+  assigneeId?: string;
 }

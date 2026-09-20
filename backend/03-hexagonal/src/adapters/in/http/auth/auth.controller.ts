@@ -1,37 +1,36 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { RegisterDto, LoginDto } from './auth.dto';
-import { RegisterUserPort, LoginUserPort } from '../../../../ports';
+import { Body, Controller, Get, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
+import { SigninDto, SignupDto } from './auth.dto';
+import { ISigninUseCase } from '../../../../domain/ports/primary/signin.usecase.interface';
+import { ISignupUseCase } from '../../../../domain/ports/primary/signup.usecase.interface';
+import { IGetProfileUseCase } from '../../../../domain/ports/primary/get-profile.usecase.interface';
+import { JwtAuthGuard } from '../../../out/auth/jwt-auth.guard';
+import { CurrentUser } from '../../decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly registerUseCase: RegisterUserPort,
-    private readonly loginUseCase: LoginUserPort,
+    @Inject(ISignupUseCase) private readonly signupUseCase: ISignupUseCase,
+    @Inject(ISigninUseCase) private readonly signinUseCase: ISigninUseCase,
+    @Inject(IGetProfileUseCase) private readonly getProfileUseCase: IGetProfileUseCase,
   ) {}
 
-  @Post('register')
-  async register(@Body() dto: RegisterDto) {
-    const result = await this.registerUseCase.execute(dto);
-    return {
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-      },
-      accessToken: result.accessToken,
-    };
+  @Post('signup')
+  async signup(@Body() dto: SignupDto) {
+    const { user, token } = await this.signupUseCase.execute(dto.email, dto.password, dto.name);
+    return { user: user.toPublic(), token };
   }
 
-  @Post('login')
-  async login(@Body() dto: LoginDto) {
-    const result = await this.loginUseCase.execute(dto);
-    return {
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-      },
-      accessToken: result.accessToken,
-    };
+  @Post('signin')
+  @HttpCode(200)
+  async signin(@Body() dto: SigninDto) {
+    const { user, token } = await this.signinUseCase.execute(dto.email, dto.password);
+    return { user: user.toPublic(), token };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async me(@CurrentUser('userId') userId: string) {
+    const user = await this.getProfileUseCase.execute(userId);
+    return user.toPublic();
   }
 }

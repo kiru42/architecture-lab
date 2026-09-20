@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IDeleteCommentUseCase } from '@domain/ports/primary/delete-comment.usecase.interface';
+import { IDeleteCommentUseCase } from '../../domain/ports/primary/delete-comment.usecase.interface';
 import {
   ICommentRepository,
   ICommentRepository as ICommentRepositoryToken,
-} from '@domain/ports/secondary/comment.repository.interface';
+} from '../../domain/ports/secondary/comment.repository.interface';
 
 @Injectable()
 export class DeleteCommentUseCase implements IDeleteCommentUseCase {

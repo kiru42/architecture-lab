@@ -1,14 +1,14 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { IUpdateTaskUseCase } from '@domain/ports/primary/update-task.usecase.interface';
+import { IUpdateTaskUseCase } from '../../domain/ports/primary/update-task.usecase.interface';
 import {
   ITaskRepository,
   ITaskRepository as ITaskRepositoryToken,
-} from '@domain/ports/secondary/task.repository.interface';
+} from '../../domain/ports/secondary/task.repository.interface';
 import {
   IProjectRepository,
   IProjectRepository as IProjectRepositoryToken,
-} from '@domain/ports/secondary/project.repository.interface';
-import { Task } from '@domain/model/task.entity';
+} from '../../domain/ports/secondary/project.repository.interface';
+import { Task } from '../../domain/model/task.entity';
 
 @Injectable()
 export class UpdateTaskUseCase implements IUpdateTaskUseCase {

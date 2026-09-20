@@ -1,12 +1,12 @@
 import { Inject, Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { ISignupUseCase } from '@domain/ports/primary/signup.usecase.interface';
+import { ISignupUseCase } from '../../domain/ports/primary/signup.usecase.interface';
 import {
   IUserRepository,
   IUserRepository as IUserRepositoryToken,
-} from '@domain/ports/secondary/user.repository.interface';
-import { User } from '@domain/model/user.entity';
+} from '../../domain/ports/secondary/user.repository.interface';
+import { User } from '../../domain/model/user.entity';
 
 @Injectable()
 export class SignupUseCase implements ISignupUseCase {

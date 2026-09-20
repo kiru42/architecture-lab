@@ -1,18 +1,18 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { ICreateCommentUseCase } from '@domain/ports/primary/create-comment.usecase.interface';
+import { ICreateCommentUseCase } from '../../domain/ports/primary/create-comment.usecase.interface';
 import {
   ICommentRepository,
   ICommentRepository as ICommentRepositoryToken,
-} from '@domain/ports/secondary/comment.repository.interface';
+} from '../../domain/ports/secondary/comment.repository.interface';
 import {
   ITaskRepository,
   ITaskRepository as ITaskRepositoryToken,
-} from '@domain/ports/secondary/task.repository.interface';
+} from '../../domain/ports/secondary/task.repository.interface';
 import {
   IProjectRepository,
   IProjectRepository as IProjectRepositoryToken,
-} from '@domain/ports/secondary/project.repository.interface';
-import { Comment } from '@domain/model/comment.entity';
+} from '../../domain/ports/secondary/project.repository.interface';
+import { Comment } from '../../domain/model/comment.entity';
 
 @Injectable()
 export class CreateCommentUseCase implements ICreateCommentUseCase {

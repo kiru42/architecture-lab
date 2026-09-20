@@ -1,71 +1,57 @@
 import { Injectable } from '@nestjs/common';
-import { Task, TaskStatus, TaskPriority } from '../../../../domain';
-import { TaskRepositoryPort } from '../../../../ports';
+import { Prisma } from '@prisma/client';
+import { ITaskRepository } from '../../../../domain/ports/secondary/task.repository.interface';
+import { Task } from '../../../../domain/model/task.entity';
 import { PrismaService } from './prisma.service';
 
+/** Driven adapter: implements the ITaskRepository port on top of Prisma. */
 @Injectable()
-export class PrismaTaskRepository implements TaskRepositoryPort {
+export class PrismaTaskRepository implements ITaskRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(task: Task): Promise<Task> {
-    const created = await this.prisma.task.create({
+  async create(data: {
+    title: string;
+    description?: string;
+    dueDate?: Date;
+    projectId: string;
+    assigneeId?: string;
+  }): Promise<Task> {
+    const row = await this.prisma.task.create({
       data: {
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority,
-        projectId: task.projectId,
-        assignedToId: task.assignedToId,
-        createdById: task.createdById,
-        dueDate: task.dueDate,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
+        title: data.title,
+        description: data.description ?? null,
+        dueDate: data.dueDate ?? null,
+        projectId: data.projectId,
+        assigneeId: data.assigneeId ?? null,
       },
     });
-    return this.toDomain(created);
+    return new Task(row);
   }
 
   async findById(id: string): Promise<Task | null> {
-    const task = await this.prisma.task.findUnique({ where: { id } });
-    if (!task) return null;
-    return this.toDomain(task);
+    const row = await this.prisma.task.findUnique({ where: { id } });
+    return row ? new Task(row) : null;
   }
 
   async findByProjectId(projectId: string): Promise<Task[]> {
-    const tasks = await this.prisma.task.findMany({ where: { projectId } });
-    return tasks.map((t: any) => this.toDomain(t));
-  }
-
-  async update(task: Task): Promise<Task> {
-    const updated = await this.prisma.task.update({
-      where: { id: task.id },
-      data: {
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority,
-        assignedToId: task.assignedToId,
-        dueDate: task.dueDate,
-        updatedAt: task.updatedAt,
-      },
+    const rows = await this.prisma.task.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
     });
-    return this.toDomain(updated);
+    return rows.map((row) => new Task(row));
   }
 
-  private toDomain(prismaTask: any): Task {
-    return new Task(
-      prismaTask.id,
-      prismaTask.title,
-      prismaTask.description,
-      prismaTask.status as TaskStatus,
-      prismaTask.priority as TaskPriority,
-      prismaTask.projectId,
-      prismaTask.assignedToId,
-      prismaTask.createdById,
-      prismaTask.dueDate,
-      prismaTask.createdAt,
-      prismaTask.updatedAt,
-    );
+  async update(id: string, data: Partial<Task>): Promise<Task> {
+    // UncheckedUpdateInput is the variant that takes scalar foreign keys
+    // (assigneeId) instead of relation objects (assignee).
+    const patch: Prisma.TaskUncheckedUpdateInput = {};
+    if (data.title !== undefined) patch.title = data.title;
+    if (data.description !== undefined) patch.description = data.description;
+    if (data.completed !== undefined) patch.completed = data.completed;
+    if (data.dueDate !== undefined) patch.dueDate = data.dueDate;
+    if (data.assigneeId !== undefined) patch.assigneeId = data.assigneeId;
+
+    const row = await this.prisma.task.update({ where: { id }, data: patch });
+    return new Task(row);
   }
 }

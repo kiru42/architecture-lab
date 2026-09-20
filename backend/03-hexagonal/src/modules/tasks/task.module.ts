@@ -1,28 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TaskController } from '../../adapters/in/http/tasks/task.controller';
-import { CreateTaskUseCase, AssignTaskUseCase, ListTasksByProjectUseCase } from '../../application';
+import {
+  CreateTaskUseCase,
+  ListTasksUseCase,
+  UpdateTaskUseCase,
+} from '../../application/use-cases';
 import { PrismaModule } from '../infrastructure/prisma.module';
-
-export const CREATE_TASK_PORT = 'CreateTaskPort';
-export const ASSIGN_TASK_PORT = 'AssignTaskPort';
-export const LIST_TASKS_BY_PROJECT_PORT = 'ListTasksByProjectPort';
+import { ICreateTaskUseCase } from '../../domain/ports/primary/create-task.usecase.interface';
+import { IListTasksUseCase } from '../../domain/ports/primary/list-tasks.usecase.interface';
+import { IUpdateTaskUseCase } from '../../domain/ports/primary/update-task.usecase.interface';
 
 @Module({
   imports: [PrismaModule],
   controllers: [TaskController],
   providers: [
-    {
-      provide: CREATE_TASK_PORT,
-      useClass: CreateTaskUseCase,
-    },
-    {
-      provide: ASSIGN_TASK_PORT,
-      useClass: AssignTaskUseCase,
-    },
-    {
-      provide: LIST_TASKS_BY_PROJECT_PORT,
-      useClass: ListTasksByProjectUseCase,
-    },
+    { provide: ICreateTaskUseCase, useClass: CreateTaskUseCase },
+    { provide: IListTasksUseCase, useClass: ListTasksUseCase },
+    { provide: IUpdateTaskUseCase, useClass: UpdateTaskUseCase },
   ],
 })
 export class TaskModule {}

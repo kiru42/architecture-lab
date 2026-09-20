@@ -1,77 +1,53 @@
-import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
-import { CreateTaskDto, AssignTaskDto } from './task.dto';
-import { CreateTaskPort, AssignTaskPort, ListTasksByProjectPort } from '../../../../ports';
+import { Body, Controller, Get, Inject, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { CreateTaskDto, UpdateTaskDto } from './task.dto';
+import { ICreateTaskUseCase } from '../../../../domain/ports/primary/create-task.usecase.interface';
+import { IListTasksUseCase } from '../../../../domain/ports/primary/list-tasks.usecase.interface';
+import { IUpdateTaskUseCase } from '../../../../domain/ports/primary/update-task.usecase.interface';
 import { JwtAuthGuard } from '../../../out/auth/jwt-auth.guard';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 
-@Controller('tasks')
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class TaskController {
   constructor(
-    private readonly createTaskUseCase: CreateTaskPort,
-    private readonly assignTaskUseCase: AssignTaskPort,
-    private readonly listTasksUseCase: ListTasksByProjectPort,
+    @Inject(ICreateTaskUseCase) private readonly createTask: ICreateTaskUseCase,
+    @Inject(IListTasksUseCase) private readonly listTasks: IListTasksUseCase,
+    @Inject(IUpdateTaskUseCase) private readonly updateTask: IUpdateTaskUseCase,
   ) {}
 
-  @Post()
-  async create(@Body() dto: CreateTaskDto, @CurrentUser('userId') userId: string) {
-    const task = await this.createTaskUseCase.execute({
-      title: dto.title,
-      description: dto.description,
-      priority: dto.priority,
-      projectId: dto.projectId,
-      createdById: userId,
-      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-    });
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      projectId: task.projectId,
-      assignedToId: task.assignedToId,
-      createdById: task.createdById,
-      dueDate: task.dueDate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    };
+  @Get('projects/:id/tasks')
+  async list(@Param('id') projectId: string, @CurrentUser('userId') userId: string) {
+    return this.listTasks.execute(projectId, userId);
   }
 
-  @Put(':taskId/assign')
-  async assign(
-    @Param('taskId') taskId: string,
-    @Body() dto: AssignTaskDto,
+  @Post('projects/:id/tasks')
+  async create(
+    @Param('id') projectId: string,
+    @Body() dto: CreateTaskDto,
     @CurrentUser('userId') userId: string,
   ) {
-    const task = await this.assignTaskUseCase.execute({
-      taskId,
-      assignedToId: dto.assignedToId,
-      projectId: '', // TODO: should validate project ownership
+    return this.createTask.execute({
+      title: dto.title,
+      description: dto.description,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      projectId,
+      assigneeId: dto.assigneeId,
+      userId,
     });
-    return {
-      id: task.id,
-      title: task.title,
-      assignedToId: task.assignedToId,
-      updatedAt: task.updatedAt,
-    };
   }
 
-  @Get('project/:projectId')
-  async listByProject(@Param('projectId') projectId: string) {
-    const tasks = await this.listTasksUseCase.execute(projectId);
-    return tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      description: t.description,
-      status: t.status,
-      priority: t.priority,
-      projectId: t.projectId,
-      assignedToId: t.assignedToId,
-      createdById: t.createdById,
-      dueDate: t.dueDate,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-    }));
+  @Patch('tasks/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTaskDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.updateTask.execute(id, userId, {
+      title: dto.title,
+      description: dto.description,
+      completed: dto.completed,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      assigneeId: dto.assigneeId,
+    });
   }
 }

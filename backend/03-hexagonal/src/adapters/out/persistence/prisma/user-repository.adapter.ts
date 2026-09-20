@@ -1,34 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../../../../domain';
-import { UserRepositoryPort } from '../../../../ports';
+import { IUserRepository } from '../../../../domain/ports/secondary/user.repository.interface';
+import { User } from '../../../../domain/model/user.entity';
 import { PrismaService } from './prisma.service';
 
+/** Driven adapter: implements the IUserRepository port on top of Prisma. */
 @Injectable()
-export class PrismaUserRepository implements UserRepositoryPort {
+export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) return null;
-    return new User(user.id, user.email, user.password, user.name, user.createdAt);
+  async create(email: string, password: string, name: string): Promise<User> {
+    const row = await this.prisma.user.create({ data: { email, password, name } });
+    return new User(row);
   }
 
   async findById(id: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) return null;
-    return new User(user.id, user.email, user.password, user.name, user.createdAt);
+    const row = await this.prisma.user.findUnique({ where: { id } });
+    return row ? new User(row) : null;
   }
 
-  async create(user: User): Promise<User> {
-    const created = await this.prisma.user.create({
-      data: {
-        id: user.id,
-        email: user.email,
-        password: user.passwordHash,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
-    });
-    return new User(created.id, created.email, created.password, created.name, created.createdAt);
+  async findByEmail(email: string): Promise<User | null> {
+    const row = await this.prisma.user.findUnique({ where: { email } });
+    return row ? new User(row) : null;
   }
 }

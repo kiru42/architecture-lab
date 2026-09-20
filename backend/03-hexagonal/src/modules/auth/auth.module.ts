@@ -3,15 +3,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { AuthController } from '../../adapters/in/http/auth/auth.controller';
-import { RegisterUserUseCase, LoginUserUseCase } from '../../application';
-import { BcryptHashService, JwtTokenService, JwtStrategy } from '../../adapters/out/auth';
+import { JwtStrategy } from '../../adapters/out/auth';
+import {
+  GetProfileUseCase,
+  SigninUseCase,
+  SignupUseCase,
+} from '../../application/use-cases';
 import { PrismaModule } from '../infrastructure/prisma.module';
-
-// Port tokens
-export const REGISTER_USER_PORT = 'RegisterUserPort';
-export const LOGIN_USER_PORT = 'LoginUserPort';
-export const HASH_SERVICE_PORT = 'HashServicePort';
-export const JWT_SERVICE_PORT = 'JwtServicePort';
+import { ISignupUseCase } from '../../domain/ports/primary/signup.usecase.interface';
+import { ISigninUseCase } from '../../domain/ports/primary/signin.usecase.interface';
+import { IGetProfileUseCase } from '../../domain/ports/primary/get-profile.usecase.interface';
 
 @Module({
   imports: [
@@ -27,26 +28,10 @@ export const JWT_SERVICE_PORT = 'JwtServicePort';
   ],
   controllers: [AuthController],
   providers: [
-    // Use case implementations
-    {
-      provide: REGISTER_USER_PORT,
-      useClass: RegisterUserUseCase,
-    },
-    {
-      provide: LOGIN_USER_PORT,
-      useClass: LoginUserUseCase,
-    },
-    // Service adapters
-    {
-      provide: HASH_SERVICE_PORT,
-      useClass: BcryptHashService,
-    },
-    {
-      provide: JWT_SERVICE_PORT,
-      useClass: JwtTokenService,
-    },
     JwtStrategy,
+    { provide: ISignupUseCase, useClass: SignupUseCase },
+    { provide: ISigninUseCase, useClass: SigninUseCase },
+    { provide: IGetProfileUseCase, useClass: GetProfileUseCase },
   ],
-  exports: [JWT_SERVICE_PORT],
 })
 export class AuthModule {}

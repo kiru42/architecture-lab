@@ -1,10 +1,10 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { IUpdateProjectUseCase } from '@domain/ports/primary/update-project.usecase.interface';
+import { IUpdateProjectUseCase } from '../../domain/ports/primary/update-project.usecase.interface';
 import {
   IProjectRepository,
   IProjectRepository as IProjectRepositoryToken,
-} from '@domain/ports/secondary/project.repository.interface';
-import { Project } from '@domain/model/project.entity';
+} from '../../domain/ports/secondary/project.repository.interface';
+import { Project } from '../../domain/model/project.entity';
 
 @Injectable()
 export class UpdateProjectUseCase implements IUpdateProjectUseCase {

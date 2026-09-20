@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
-import { CreateProjectDto } from './project.dto';
-import { CreateProjectPort, ListProjectsPort } from '../../../../ports';
+import { Body, Controller, Get, Inject, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { CreateProjectDto, UpdateProjectDto } from './project.dto';
+import { ICreateProjectUseCase } from '../../../../domain/ports/primary/create-project.usecase.interface';
+import { IListProjectsUseCase } from '../../../../domain/ports/primary/list-projects.usecase.interface';
+import { IUpdateProjectUseCase } from '../../../../domain/ports/primary/update-project.usecase.interface';
 import { JwtAuthGuard } from '../../../out/auth/jwt-auth.guard';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 
@@ -8,37 +10,27 @@ import { CurrentUser } from '../../decorators/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 export class ProjectController {
   constructor(
-    private readonly createProjectUseCase: CreateProjectPort,
-    private readonly listProjectsUseCase: ListProjectsPort,
+    @Inject(ICreateProjectUseCase) private readonly createProject: ICreateProjectUseCase,
+    @Inject(IListProjectsUseCase) private readonly listProjects: IListProjectsUseCase,
+    @Inject(IUpdateProjectUseCase) private readonly updateProject: IUpdateProjectUseCase,
   ) {}
 
   @Post()
   async create(@Body() dto: CreateProjectDto, @CurrentUser('userId') userId: string) {
-    const project = await this.createProjectUseCase.execute({
-      name: dto.name,
-      description: dto.description,
-      ownerId: userId,
-    });
-    return {
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      ownerId: project.ownerId,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-    };
+    return this.createProject.execute(dto.name, userId);
   }
 
   @Get()
   async list(@CurrentUser('userId') userId: string) {
-    const projects = await this.listProjectsUseCase.execute({ ownerId: userId });
-    return projects.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      ownerId: p.ownerId,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
+    return this.listProjects.execute(userId);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.updateProject.execute(id, userId, dto);
   }
 }

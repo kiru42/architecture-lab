@@ -1,33 +1,37 @@
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { PrismaService } from '../../adapters/out/persistence/prisma/prisma.service';
 import {
-  PrismaUserRepository,
+  PrismaCommentRepository,
   PrismaProjectRepository,
   PrismaTaskRepository,
+  PrismaUserRepository,
 } from '../../adapters/out/persistence/prisma';
+import { IUserRepository } from '../../domain/ports/secondary/user.repository.interface';
+import { IProjectRepository } from '../../domain/ports/secondary/project.repository.interface';
+import { ITaskRepository } from '../../domain/ports/secondary/task.repository.interface';
+import { ICommentRepository } from '../../domain/ports/secondary/comment.repository.interface';
 
-// Port tokens
-export const USER_REPOSITORY_PORT = 'UserRepositoryPort';
-export const PROJECT_REPOSITORY_PORT = 'ProjectRepositoryPort';
-export const TASK_REPOSITORY_PORT = 'TaskRepositoryPort';
-
+/**
+ * Wires the driven (secondary) ports to their Prisma adapters.
+ *
+ * Each Symbol token below is the port; the class is the adapter. Nothing above
+ * this line knows that Prisma exists.
+ */
 @Global()
 @Module({
   providers: [
     PrismaService,
-    {
-      provide: USER_REPOSITORY_PORT,
-      useClass: PrismaUserRepository,
-    },
-    {
-      provide: PROJECT_REPOSITORY_PORT,
-      useClass: PrismaProjectRepository,
-    },
-    {
-      provide: TASK_REPOSITORY_PORT,
-      useClass: PrismaTaskRepository,
-    },
+    { provide: IUserRepository, useClass: PrismaUserRepository },
+    { provide: IProjectRepository, useClass: PrismaProjectRepository },
+    { provide: ITaskRepository, useClass: PrismaTaskRepository },
+    { provide: ICommentRepository, useClass: PrismaCommentRepository },
   ],
-  exports: [PrismaService, USER_REPOSITORY_PORT, PROJECT_REPOSITORY_PORT, TASK_REPOSITORY_PORT],
+  exports: [
+    PrismaService,
+    IUserRepository,
+    IProjectRepository,
+    ITaskRepository,
+    ICommentRepository,
+  ],
 })
 export class PrismaModule {}

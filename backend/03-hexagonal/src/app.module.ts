@@ -4,8 +4,9 @@ import { PrismaModule } from './modules/infrastructure/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProjectModule } from './modules/projects/project.module';
 import { TaskModule } from './modules/tasks/task.module';
+import { CommentModule } from './modules/comments/comment.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuthModule, ProjectModule, TaskModule],
+  imports: [ConfigModule, PrismaModule, AuthModule, ProjectModule, TaskModule, CommentModule],
 })
 export class AppModule {}

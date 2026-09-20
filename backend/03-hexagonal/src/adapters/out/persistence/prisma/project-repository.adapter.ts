@@ -1,63 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { Project } from '../../../../domain';
-import { ProjectRepositoryPort } from '../../../../ports';
+import { Prisma } from '@prisma/client';
+import { IProjectRepository } from '../../../../domain/ports/secondary/project.repository.interface';
+import { Project } from '../../../../domain/model/project.entity';
 import { PrismaService } from './prisma.service';
 
+/** Driven adapter: implements the IProjectRepository port on top of Prisma. */
 @Injectable()
-export class PrismaProjectRepository implements ProjectRepositoryPort {
+export class PrismaProjectRepository implements IProjectRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(project: Project): Promise<Project> {
-    const created = await this.prisma.project.create({
-      data: {
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        ownerId: project.ownerId,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-      },
-    });
-    return new Project(
-      created.id,
-      created.name,
-      created.description,
-      created.ownerId,
-      created.createdAt,
-      created.updatedAt,
-    );
+  async create(name: string, userId: string): Promise<Project> {
+    const row = await this.prisma.project.create({ data: { name, userId } });
+    return new Project(row);
   }
 
   async findById(id: string): Promise<Project | null> {
-    const project = await this.prisma.project.findUnique({ where: { id } });
-    if (!project) return null;
-    return new Project(
-      project.id,
-      project.name,
-      project.description,
-      project.ownerId,
-      project.createdAt,
-      project.updatedAt,
-    );
+    const row = await this.prisma.project.findUnique({ where: { id } });
+    return row ? new Project(row) : null;
   }
 
-  async findByOwnerId(ownerId: string): Promise<Project[]> {
-    const projects = await this.prisma.project.findMany({ where: { ownerId } });
-    return projects.map(
-      (p: any) => new Project(p.id, p.name, p.description, p.ownerId, p.createdAt, p.updatedAt),
-    );
+  async findByUserId(userId: string): Promise<Project[]> {
+    const rows = await this.prisma.project.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map((row) => new Project(row));
   }
 
-  async findByName(name: string): Promise<Project | null> {
-    const project = await this.prisma.project.findUnique({ where: { name } });
-    if (!project) return null;
-    return new Project(
-      project.id,
-      project.name,
-      project.description,
-      project.ownerId,
-      project.createdAt,
-      project.updatedAt,
-    );
+  async update(id: string, data: Partial<Project>): Promise<Project> {
+    const patch: Prisma.ProjectUpdateInput = {};
+    if (data.name !== undefined) patch.name = data.name;
+    if (data.archived !== undefined) patch.archived = data.archived;
+
+    const row = await this.prisma.project.update({ where: { id }, data: patch });
+    return new Project(row);
   }
 }
