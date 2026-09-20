@@ -71,10 +71,16 @@ run; only `01-layered-ntier` exposes one, so `npm run test:websocket` inside
 ```bash
 cd backend/02-clean-architecture   # or any frontend
 npm run lint && npm run typecheck && npm run build && npm test
+```
 
-./scripts/check-prisma-sync.sh
-./scripts/validate-docker-builds.sh
-./scripts/validate-acceptance.sh
+Or run the whole matrix at once — the same four steps, for all eleven
+implementations:
+
+```bash
+./scripts/validate-all.sh             # lint + typecheck + build + unit tests, x11
+./scripts/check-prisma-sync.sh        # frozen schema/migrations in every backend
+./scripts/validate-docker-builds.sh   # all 11 images build
+./scripts/validate-acceptance.sh      # the shared BDD suite against all 7 backends
 ```
 
 ## Not attempted yet

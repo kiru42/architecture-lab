@@ -78,7 +78,8 @@ architecture-lab/
 │   ├── sync-prisma-schema.sh      # Push shared/prisma into every backend
 │   ├── check-prisma-sync.sh       # Fail if a backend copy drifts from shared/prisma
 │   ├── validate-docker-builds.sh  # Build every image, print a pass/fail matrix
-│   └── validate-acceptance.sh     # Run the shared BDD suite against every backend
+│   ├── validate-acceptance.sh     # Run the shared BDD suite against every backend
+│   └── validate-all.sh            # lint + typecheck + build + unit tests, x11
 └── docker-compose.yml   # Boot any backend+frontend pair
 ```
 
@@ -167,7 +168,7 @@ To check that every image still builds:
 ### Running Tests
 
 ```bash
-# Backend unit tests (any backend) -- Jest, 115 tests across the seven backends
+# Backend unit tests (any backend) -- Jest, 129 tests across the seven backends
 cd backend/02-clean-architecture
 npm test
 
@@ -257,7 +258,7 @@ Measured from the tree, not estimated:
 
 | # | Architecture | Source files | Source LOC | Unit tests | Layers |
 |---|--------------|--------------|------------|------------|--------|
-| 01 | Layered N-Tier | 26 | ~882 | 14 | 3 (Controller → Service → Repository) |
+| 01 | Layered N-Tier | 26 | ~882 | 28 | 3 (Controller → Service → Repository) |
 | 02 | Clean Architecture | 53 | ~1,496 | 14 | 4 (Presentation → Application → Domain → Infrastructure) |
 | 03 | Hexagonal | 61 | ~1,524 | 17 | 3 (Adapters IN → Core → Adapters OUT) |
 | 04 | Onion | 39 | ~1,255 | 14 | 4 (API → Application → Domain → Infrastructure) |
@@ -282,7 +283,7 @@ Measured from the tree, not estimated:
 - **Smallest Backend:** Modular Monolith (32 files, 707 LOC)
 - **Largest Frontend:** Feature-Sliced Design (36 files, 1,536 LOC)
 - **Smallest Frontend:** Atomic Design (31 files, 1,102 LOC)
-- **Unit tests:** 150 in total (115 backend, 35 frontend), all blocking in CI
+- **Unit tests:** 164 in total (129 backend, 35 frontend), all blocking in CI
 
 ---
 

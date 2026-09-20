@@ -91,7 +91,7 @@ Measured from the tree (source files only; tests counted separately):
 
 | Pattern | LOC | Files | Unit tests |
 |---------|-----|-------|------------|
-| Layered | ~882 | 26 | 14 |
+| Layered | ~882 | 26 | 28 |
 | Clean | ~1,496 | 53 | 14 |
 | Hexagonal | ~1,524 | 61 | 17 |
 | Onion | ~1,255 | 39 | 14 |

@@ -43,7 +43,6 @@ describe('TasksService', () => {
     service = module.get<TasksService>(TasksService);
     prisma = module.get<PrismaService>(PrismaService);
     projectsService = module.get<ProjectsService>(ProjectsService);
-    notificationsGateway = module.get<NotificationsGateway>(NotificationsGateway);
   });
 
   afterEach(() => {

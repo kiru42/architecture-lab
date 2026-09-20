@@ -58,6 +58,8 @@ the CI badge was green the whole time because every step carried
   only two existed.
 - `frontend/04-atomic-only` → `frontend/04-atomic-design`, so the directory
   finally matches ADR-0023.
+- `scripts/validate-all.sh` runs the whole `build-and-test` matrix locally, the
+  same four steps CI runs for each of the eleven implementations.
 - `*.tsbuildinfo` is no longer tracked (it had been committed by accident), and
   `07-modular-monolith` gained the `tsconfig.build.json` it was missing.
 - Every backend carries its own `prisma/schema.prisma` + `prisma/migrations`
@@ -86,6 +88,14 @@ the CI badge was green the whole time because every step carried
 - **`03-hexagonal` and `07-modular-monolith` had no tests either** — `jest`
   exited 1 with "No tests found". 17 and 23 tests now cover the domain entities,
   the use cases' ownership checks and the Prisma-backed services.
+- **Two of `01-layered-ntier`'s four spec files could not compile.** They
+  assigned to `jwtService` and `notificationsGateway`, neither of which was
+  declared, so `tsc` and `ts-jest` both failed and *half of its tests had never
+  run*: it reported 14 when it actually has 28.
+- **Every backend's `lint` script ended in `--fix`.** A lint step that rewrites
+  the files it is judging can never fail on formatting, which makes it
+  decoration in a pipeline whose whole premise is that nothing is decoration.
+  The flag is gone; all seven backends pass ESLint without it.
 
 ### 📊 Status
 
@@ -100,8 +110,9 @@ the CI badge was green the whole time because every step carried
 | 07-modular-monolith | ✅ | ✅ | ✅ | ✅ | ✅ |
 | frontend ×4 | ✅ | ✅ | ✅ | ✅ | n/a |
 
-Every number above is a command that ran, not an intention. Unit tests: 115
-across the seven backends, 35 across the four frontends.
+Every number above is a command that ran, not an intention. Unit tests: 129
+across the seven backends, 35 across the four frontends, plus the shared BDD
+suite against each backend.
 
 ---
 
