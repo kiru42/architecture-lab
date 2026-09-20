@@ -1,0 +1,13 @@
+# Normalize line endings so shell scripts and Dockerfiles stay executable
+# regardless of the contributor's OS.
+* text=auto eol=lf
+
+*.sh          text eol=lf
+*.Dockerfile  text eol=lf
+Dockerfile    text eol=lf
+
+# Keep binary-ish artifacts untouched
+*.png binary
+*.jpg binary
+*.ico binary
+package-lock.json -diff linguist-generated=true

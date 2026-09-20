@@ -1,0 +1,26 @@
+# Build context hygiene — keep the image build fast and reproducible.
+# Dependencies and build artifacts are (re)installed inside the image.
+**/node_modules
+**/dist
+**/build
+**/coverage
+
+# Local environment
+**/.env
+**/.env.local
+**/.env.*.local
+**/*.log
+
+# Editor / OS noise
+**/.DS_Store
+**/.vscode
+**/.idea
+**/*.swp
+**/*.swo
+
+# Git metadata
+.git
+.gitignore
+
+# TypeScript incremental caches
+**/*.tsbuildinfo
