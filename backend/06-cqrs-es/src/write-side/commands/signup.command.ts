@@ -1,4 +1,4 @@
-export class RegisterUserCommand {
+export class SignupCommand {
   constructor(
     public readonly userId: string,
     public readonly email: string,

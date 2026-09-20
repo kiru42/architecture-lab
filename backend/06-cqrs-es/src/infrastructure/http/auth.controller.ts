@@ -1,20 +1,21 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { RegisterUserCommand } from '../../write-side/commands/register-user.command';
-import { LoginUserCommand } from '../../write-side/commands/login-user.command';
-import { GetUsersQuery } from '../../read-side/queries/get-users.query';
-import { GetUserByIdQuery } from '../../read-side/queries/get-user-by-id.query';
 import { v4 as uuid } from 'uuid';
+import { SignupCommand } from '../../write-side/commands/signup.command';
+import { SigninCommand } from '../../write-side/commands/signin.command';
+import { GetProfileQuery } from '../../read-side/queries/get-profile.query';
+import { UserReadModel } from '../../read-side/projections/user-read-model';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { CurrentUser } from './current-user.decorator';
 
-class RegisterDto {
-  email: string;
-  password: string;
-  name: string;
-}
-
-class LoginDto {
-  email: string;
-  password: string;
+/** Public projection required by openapi.yaml — never the password hash. */
+function toPublic(user: UserReadModel) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    createdAt: user.registeredAt,
+  };
 }
 
 @Controller('auth')
@@ -24,28 +25,29 @@ export class AuthController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  @Post('register')
-  async register(@Body() dto: RegisterDto) {
-    const userId = uuid();
-    await this.commandBus.execute(
-      new RegisterUserCommand(userId, dto.email, dto.password, dto.name),
+  @Post('signup')
+  async signup(@Body() dto: { email: string; password: string; name: string }) {
+    const { userId, token } = await this.commandBus.execute(
+      new SignupCommand(uuid(), dto.email, dto.password, dto.name),
     );
-    return { userId };
+    const user: UserReadModel = await this.queryBus.execute(new GetProfileQuery(userId));
+    return { user: toPublic(user), token };
   }
 
-  @Post('login')
-  async login(@Body() dto: LoginDto) {
-    const token = await this.commandBus.execute(new LoginUserCommand(dto.email, dto.password));
-    return { access_token: token };
+  @Post('signin')
+  @HttpCode(200)
+  async signin(@Body() dto: { email: string; password: string }) {
+    const { userId, token } = await this.commandBus.execute(
+      new SigninCommand(dto.email, dto.password),
+    );
+    const user: UserReadModel = await this.queryBus.execute(new GetProfileQuery(userId));
+    return { user: toPublic(user), token };
   }
 
-  @Get('users')
-  async getUsers() {
-    return this.queryBus.execute(new GetUsersQuery());
-  }
-
-  @Get('users/:id')
-  async getUserById(@Param('id') id: string) {
-    return this.queryBus.execute(new GetUserByIdQuery(id));
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async me(@CurrentUser('userId') userId: string) {
+    const user: UserReadModel = await this.queryBus.execute(new GetProfileQuery(userId));
+    return toPublic(user);
   }
 }
