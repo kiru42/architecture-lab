@@ -1,28 +1,46 @@
+/**
+ * Onion layer: Domain (the centre).
+ *
+ * Project owns the rules about archiving and renaming; nothing here knows that
+ * Prisma or HTTP exist.
+ */
 export class Project {
   constructor(
     public readonly id: string,
     public readonly name: string,
-    public readonly description: string | null,
-    public readonly ownerId: string,
+    public readonly archived: boolean,
+    public readonly userId: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
 
-  static create(id: string, name: string, description: string | null, ownerId: string): Project {
-    const now = new Date();
-    return new Project(id, name, description, ownerId, now, now);
+  static create(name: string, userId: string, now = new Date()): Project {
+    return new Project('', name, false, userId, now, now);
   }
 
   isOwnedBy(userId: string): boolean {
-    return this.ownerId === userId;
+    return this.userId === userId;
   }
 
-  updateInfo(name?: string, description?: string | null): Project {
+  /** Domain behaviour: archiving is idempotent. */
+  archive(): Project {
+    return this.with({ archived: true });
+  }
+
+  unarchive(): Project {
+    return this.with({ archived: false });
+  }
+
+  rename(name: string): Project {
+    return this.with({ name });
+  }
+
+  private with(changes: Partial<Pick<Project, 'name' | 'archived'>>): Project {
     return new Project(
       this.id,
-      name ?? this.name,
-      description !== undefined ? description : this.description,
-      this.ownerId,
+      changes.name ?? this.name,
+      changes.archived ?? this.archived,
+      this.userId,
       this.createdAt,
       new Date(),
     );

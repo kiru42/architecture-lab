@@ -4,6 +4,7 @@ import { PrismaModule } from './persistence/prisma.module';
 import { AuthModule } from './auth.module';
 import { ProjectModule } from './project.module';
 import { TaskModule } from './task.module';
+import { CommentModule } from './comment.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TaskModule } from './task.module';
     AuthModule,
     ProjectModule,
     TaskModule,
+    CommentModule,
   ],
 })
 export class AppModule {}

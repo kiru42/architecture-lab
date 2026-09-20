@@ -1,23 +1,29 @@
-import { Injectable, ConflictException, UnauthorizedException, Inject } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { User } from '../../domain/entities/user.entity';
 import { IUserRepository } from '../interfaces/user-repository.interface';
 import { IHashService } from '../interfaces/hash-service.interface';
 import { IJwtService } from '../interfaces/jwt-service.interface';
 
-export interface RegisterDto {
+export interface SignupCommand {
   email: string;
   password: string;
   name: string;
 }
 
-export interface LoginDto {
+export interface SigninCommand {
   email: string;
   password: string;
 }
 
 export interface AuthResult {
   user: User;
-  accessToken: string;
+  token: string;
 }
 
 @Injectable()
@@ -28,33 +34,39 @@ export class AuthService {
     @Inject('IJwtService') private readonly jwtService: IJwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResult> {
-    const existing = await this.userRepository.findByEmail(dto.email);
+  async signup(command: SignupCommand): Promise<AuthResult> {
+    const existing = await this.userRepository.findByEmail(command.email);
     if (existing) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException('User with this email already exists');
     }
 
-    const passwordHash = await this.hashService.hash(dto.password);
-    const user = User.create(crypto.randomUUID(), dto.email, passwordHash, dto.name);
+    const passwordHash = await this.hashService.hash(command.password);
+    const user = await this.userRepository.create(
+      User.create(command.email, passwordHash, command.name),
+    );
 
-    const created = await this.userRepository.create(user);
-    const accessToken = this.jwtService.sign({ sub: created.id, email: created.email });
-
-    return { user: created, accessToken };
+    return { user, token: this.jwtService.sign({ sub: user.id, email: user.email }) };
   }
 
-  async login(dto: LoginDto): Promise<AuthResult> {
-    const user = await this.userRepository.findByEmail(dto.email);
+  async signin(command: SigninCommand): Promise<AuthResult> {
+    const user = await this.userRepository.findByEmail(command.email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isValid = await this.hashService.compare(dto.password, user.getPasswordHash());
-    if (!isValid) {
+    const matches = await this.hashService.compare(command.password, user.getPasswordHash());
+    if (!matches) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const accessToken = this.jwtService.sign({ sub: user.id, email: user.email });
-    return { user, accessToken };
+    return { user, token: this.jwtService.sign({ sub: user.id, email: user.email }) };
+  }
+
+  async getProfile(userId: string): Promise<User> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 }

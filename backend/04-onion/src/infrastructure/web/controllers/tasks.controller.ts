@@ -1,83 +1,64 @@
-import { Controller, Post, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { TaskService } from '../../../core/application/services/task.service';
-import { CreateTaskDto, AssignTaskDto } from '../dto/task.dto';
+import { CreateTaskDto, UpdateTaskDto } from '../dto/task.dto';
 import { JwtAuthGuard } from '../middleware/jwt-auth.guard';
 import { CurrentUser } from '../middleware/current-user.decorator';
-import { User } from '../../../core/domain/entities/user.entity';
+import { Task } from '../../../core/domain/entities/task.entity';
 
-@Controller('projects/:projectId/tasks')
+/** Tasks and the API contract's Task schema have the same shape. */
+function toResponse(task: Task) {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    completed: task.completed,
+    dueDate: task.dueDate,
+    projectId: task.projectId,
+    assigneeId: task.assigneeId,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+  };
+}
+
+@Controller()
 @UseGuards(JwtAuthGuard)
 export class TasksController {
   constructor(private readonly taskService: TaskService) {}
 
-  @Post()
+  @Get('projects/:id/tasks')
+  async list(@Param('id') projectId: string, @CurrentUser('userId') userId: string) {
+    const tasks = await this.taskService.listByProject(projectId, userId);
+    return tasks.map(toResponse);
+  }
+
+  @Post('projects/:id/tasks')
   async create(
-    @Param('projectId') projectId: string,
+    @Param('id') projectId: string,
     @Body() dto: CreateTaskDto,
-    @CurrentUser() user: User,
+    @CurrentUser('userId') userId: string,
   ) {
-    const task = await this.taskService.create({
-      ...dto,
-      projectId,
-      createdById: user.id,
+    const task = await this.taskService.create(projectId, userId, {
+      title: dto.title,
+      description: dto.description,
       dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      assigneeId: dto.assigneeId,
     });
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      projectId: task.projectId,
-      assignedToId: task.assignedToId,
-      createdById: task.createdById,
-      dueDate: task.dueDate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    };
+    return toResponse(task);
   }
 
-  @Get()
-  async list(@Param('projectId') projectId: string) {
-    const tasks = await this.taskService.listByProject(projectId);
-    return tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      description: t.description,
-      status: t.status,
-      priority: t.priority,
-      projectId: t.projectId,
-      assignedToId: t.assignedToId,
-      createdById: t.createdById,
-      dueDate: t.dueDate,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-    }));
-  }
-
-  @Patch(':taskId/assign')
-  async assign(
-    @Param('projectId') projectId: string,
-    @Param('taskId') taskId: string,
-    @Body() dto: AssignTaskDto,
+  @Patch('tasks/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTaskDto,
+    @CurrentUser('userId') userId: string,
   ) {
-    const task = await this.taskService.assign({
-      taskId,
-      assignedToId: dto.assignedToId,
-      projectId,
+    const task = await this.taskService.update(id, userId, {
+      title: dto.title,
+      description: dto.description,
+      completed: dto.completed,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      assigneeId: dto.assigneeId,
     });
-    return {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      projectId: task.projectId,
-      assignedToId: task.assignedToId,
-      createdById: task.createdById,
-      dueDate: task.dueDate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    };
+    return toResponse(task);
   }
 }

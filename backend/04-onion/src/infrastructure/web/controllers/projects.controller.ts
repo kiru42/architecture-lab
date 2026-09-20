@@ -1,9 +1,21 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ProjectService } from '../../../core/application/services/project.service';
-import { CreateProjectDto } from '../dto/project.dto';
+import { CreateProjectDto, UpdateProjectDto } from '../dto/project.dto';
 import { JwtAuthGuard } from '../middleware/jwt-auth.guard';
 import { CurrentUser } from '../middleware/current-user.decorator';
-import { User } from '../../../core/domain/entities/user.entity';
+import { Project } from '../../../core/domain/entities/project.entity';
+
+/** Projects and the API contract's Project schema have the same shape. */
+function toResponse(project: Project) {
+  return {
+    id: project.id,
+    name: project.name,
+    archived: project.archived,
+    userId: project.userId,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  };
+}
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
@@ -11,31 +23,24 @@ export class ProjectsController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Post()
-  async create(@Body() dto: CreateProjectDto, @CurrentUser() user: User) {
-    const project = await this.projectService.create({
-      ...dto,
-      ownerId: user.id,
-    });
-    return {
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      ownerId: project.ownerId,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-    };
+  async create(@Body() dto: CreateProjectDto, @CurrentUser('userId') userId: string) {
+    const project = await this.projectService.create({ name: dto.name, userId });
+    return toResponse(project);
   }
 
   @Get()
-  async list(@CurrentUser() user: User) {
-    const projects = await this.projectService.listByOwner(user.id);
-    return projects.map((p) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      ownerId: p.ownerId,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
+  async list(@CurrentUser('userId') userId: string) {
+    const projects = await this.projectService.listByUser(userId);
+    return projects.map(toResponse);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProjectDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const project = await this.projectService.update(id, userId, dto);
+    return toResponse(project);
   }
 }

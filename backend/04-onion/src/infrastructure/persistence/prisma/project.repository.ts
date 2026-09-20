@@ -9,55 +9,40 @@ export class PrismaProjectRepository implements IProjectRepository {
 
   async create(project: Project): Promise<Project> {
     const raw = await this.prisma.project.create({
-      data: {
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        ownerId: project.ownerId,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-      },
+      data: { name: project.name, userId: project.userId },
     });
-    return new Project(
-      raw.id,
-      raw.name,
-      raw.description,
-      raw.ownerId,
-      raw.createdAt,
-      raw.updatedAt,
-    );
+    return PrismaProjectRepository.toDomain(raw);
   }
 
   async findById(id: string): Promise<Project | null> {
     const raw = await this.prisma.project.findUnique({ where: { id } });
-    if (!raw) return null;
-    return new Project(
-      raw.id,
-      raw.name,
-      raw.description,
-      raw.ownerId,
-      raw.createdAt,
-      raw.updatedAt,
-    );
+    return raw ? PrismaProjectRepository.toDomain(raw) : null;
   }
 
-  async findByOwnerId(ownerId: string): Promise<Project[]> {
-    const raws = await this.prisma.project.findMany({ where: { ownerId } });
-    return raws.map(
-      (raw: any) => new Project(raw.id, raw.name, raw.description, raw.ownerId, raw.createdAt, raw.updatedAt),
-    );
+  async findByUserId(userId: string): Promise<Project[]> {
+    const raws = await this.prisma.project.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return raws.map(PrismaProjectRepository.toDomain);
   }
 
-  async findByName(name: string): Promise<Project | null> {
-    const raw = await this.prisma.project.findFirst({ where: { name } });
-    if (!raw) return null;
-    return new Project(
-      raw.id,
-      raw.name,
-      raw.description,
-      raw.ownerId,
-      raw.createdAt,
-      raw.updatedAt,
-    );
+  async update(project: Project): Promise<Project> {
+    const raw = await this.prisma.project.update({
+      where: { id: project.id },
+      data: { name: project.name, archived: project.archived },
+    });
+    return PrismaProjectRepository.toDomain(raw);
+  }
+
+  private static toDomain(raw: {
+    id: string;
+    name: string;
+    archived: boolean;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Project {
+    return new Project(raw.id, raw.name, raw.archived, raw.userId, raw.createdAt, raw.updatedAt);
   }
 }

@@ -1,11 +1,18 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateProjectDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+}
 
+export class UpdateProjectDto {
   @IsString()
+  @IsNotEmpty()
   @IsOptional()
-  description?: string;
+  name?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  archived?: boolean;
 }

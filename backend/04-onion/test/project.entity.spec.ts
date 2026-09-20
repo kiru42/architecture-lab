@@ -1,34 +1,45 @@
 import { Project } from '../src/core/domain/entities/project.entity';
 
-describe('Project Entity', () => {
-  it('should create a project', () => {
-    const project = Project.create('1', 'Test Project', 'Description', 'owner-1');
+describe('Project (domain entity)', () => {
+  it('creates an unarchived project owned by the given user', () => {
+    const project = Project.create('Test Project', 'user-1');
 
-    expect(project.id).toBe('1');
     expect(project.name).toBe('Test Project');
-    expect(project.description).toBe('Description');
-    expect(project.ownerId).toBe('owner-1');
+    expect(project.userId).toBe('user-1');
+    expect(project.archived).toBe(false);
     expect(project.createdAt).toBeInstanceOf(Date);
     expect(project.updatedAt).toBeInstanceOf(Date);
   });
 
-  it('should check ownership', () => {
-    const project = Project.create('1', 'Test', null, 'owner-1');
+  it('knows who owns it', () => {
+    const project = Project.create('Test', 'user-1');
 
-    expect(project.isOwnedBy('owner-1')).toBe(true);
-    expect(project.isOwnedBy('owner-2')).toBe(false);
+    expect(project.isOwnedBy('user-1')).toBe(true);
+    expect(project.isOwnedBy('user-2')).toBe(false);
   });
 
-  it('should update project info', async () => {
-    const project = Project.create('1', 'Original', 'Desc', 'owner-1');
+  it('archives and unarchives immutably', () => {
+    const project = Project.create('Test', 'user-1');
 
-    // Wait 10ms to ensure updatedAt differs
+    const archived = project.archive();
+    expect(archived.archived).toBe(true);
+    // the original is untouched — entities here return new instances
+    expect(project.archived).toBe(false);
+    expect(archived.id).toBe(project.id);
+
+    expect(archived.unarchive().archived).toBe(false);
+  });
+
+  it('renames and refreshes updatedAt', async () => {
+    const project = Project.create('Original', 'user-1');
+
+    // ensure updatedAt can differ from createdAt
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    const updated = project.updateInfo('Updated', 'New desc');
+    const renamed = project.rename('Renamed');
 
-    expect(updated.name).toBe('Updated');
-    expect(updated.description).toBe('New desc');
-    expect(updated.updatedAt.getTime()).toBeGreaterThan(project.createdAt.getTime());
+    expect(renamed.name).toBe('Renamed');
+    expect(project.name).toBe('Original');
+    expect(renamed.updatedAt.getTime()).toBeGreaterThan(project.createdAt.getTime());
   });
 });

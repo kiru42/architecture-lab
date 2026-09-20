@@ -1,71 +1,81 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
-import { Task, TaskPriority } from '../../domain/entities/task.entity';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Task } from '../../domain/entities/task.entity';
 import { ITaskRepository } from '../interfaces/task-repository.interface';
-import { IProjectRepository } from '../interfaces/project-repository.interface';
 import { IUserRepository } from '../interfaces/user-repository.interface';
+import { ProjectService } from './project.service';
 
-export interface CreateTaskDto {
+export interface CreateTaskCommand {
   title: string;
   description?: string;
-  priority: TaskPriority;
-  projectId: string;
-  createdById: string;
   dueDate?: Date;
+  assigneeId?: string;
 }
 
-export interface AssignTaskDto {
-  taskId: string;
-  assignedToId: string;
-  projectId: string;
+export interface UpdateTaskCommand {
+  title?: string;
+  description?: string;
+  completed?: boolean;
+  dueDate?: Date;
+  assigneeId?: string;
 }
 
 @Injectable()
 export class TaskService {
   constructor(
     @Inject('ITaskRepository') private readonly taskRepository: ITaskRepository,
-    @Inject('IProjectRepository') private readonly projectRepository: IProjectRepository,
     @Inject('IUserRepository') private readonly userRepository: IUserRepository,
+    private readonly projectService: ProjectService,
   ) {}
 
-  async create(dto: CreateTaskDto): Promise<Task> {
-    const project = await this.projectRepository.findById(dto.projectId);
-    if (!project) {
-      throw new NotFoundException('Project not found');
+  async create(projectId: string, userId: string, command: CreateTaskCommand): Promise<Task> {
+    await this.projectService.requireOwnedProject(projectId, userId);
+
+    if (command.assigneeId) {
+      await this.requireExistingUser(command.assigneeId);
     }
 
-    const task = Task.create(
-      crypto.randomUUID(),
-      dto.title,
-      dto.description ?? null,
-      dto.priority,
-      dto.projectId,
-      dto.createdById,
-      dto.dueDate ?? null,
+    return this.taskRepository.create(
+      Task.create(command.title, projectId, {
+        description: command.description ?? null,
+        dueDate: command.dueDate ?? null,
+        assigneeId: command.assigneeId ?? null,
+      }),
     );
-
-    return this.taskRepository.create(task);
   }
 
-  async assign(dto: AssignTaskDto): Promise<Task> {
-    const task = await this.taskRepository.findById(dto.taskId);
+  async listByProject(projectId: string, userId: string): Promise<Task[]> {
+    await this.projectService.requireOwnedProject(projectId, userId);
+    return this.taskRepository.findByProjectId(projectId);
+  }
+
+  async update(id: string, userId: string, command: UpdateTaskCommand): Promise<Task> {
+    const task = await this.taskRepository.findById(id);
     if (!task) {
       throw new NotFoundException('Task not found');
     }
+    // Ownership is derived from the project the task belongs to.
+    await this.projectService.requireOwnedProject(task.projectId, userId);
 
-    if (!task.belongsToProject(dto.projectId)) {
-      throw new ForbiddenException('Task does not belong to this project');
+    if (command.assigneeId) {
+      await this.requireExistingUser(command.assigneeId);
     }
 
-    const user = await this.userRepository.findById(dto.assignedToId);
-    if (!user) {
-      throw new NotFoundException('User not found');
+    let updated = task;
+    if (command.title !== undefined) updated = updated.rename(command.title);
+    if (command.description !== undefined) updated = updated.describe(command.description);
+    if (command.dueDate !== undefined) updated = updated.reschedule(command.dueDate);
+    if (command.assigneeId !== undefined) updated = updated.reassign(command.assigneeId);
+    if (command.completed !== undefined) {
+      updated = command.completed ? updated.markCompleted() : updated.markIncomplete();
     }
 
-    const updated = task.assignTo(dto.assignedToId);
     return this.taskRepository.update(updated);
   }
 
-  async listByProject(projectId: string): Promise<Task[]> {
-    return this.taskRepository.findByProjectId(projectId);
+  private async requireExistingUser(userId: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
   }
 }
