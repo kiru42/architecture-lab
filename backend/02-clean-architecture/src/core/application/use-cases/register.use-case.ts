@@ -29,10 +29,10 @@ export class RegisterUseCase {
 
     // Generate JWT
     const payload = { sub: saved.id, email: saved.email };
-    const accessToken = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload);
 
     return {
-      accessToken,
+      token,
       user: {
         id: saved.id,
         email: saved.email,

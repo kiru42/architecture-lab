@@ -26,10 +26,10 @@ export class LoginUseCase {
 
     // Generate JWT
     const payload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload);
 
     return {
-      accessToken,
+      token,
       user: {
         id: user.id,
         email: user.email,

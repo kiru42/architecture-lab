@@ -4,6 +4,7 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { AuthModule } from './presentation/auth/auth.module';
 import { ProjectsModule } from './presentation/projects/projects.module';
 import { TasksModule } from './presentation/tasks/tasks.module';
+import { CommentsModule } from './presentation/comments/comments.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TasksModule } from './presentation/tasks/tasks.module';
     AuthModule,
     ProjectsModule,
     TasksModule,
+    CommentsModule,
   ],
 })
 export class AppModule {}

@@ -9,11 +9,19 @@ export class LoginDto {
   password: string;
 }
 
+/** Shape required by shared/openapi.yaml — `token`, not `accessToken`. */
 export class AuthResultDto {
-  accessToken: string;
+  token: string;
   user: {
     id: string;
     email: string;
     name: string;
   };
+}
+
+export class ProfileResultDto {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
 }

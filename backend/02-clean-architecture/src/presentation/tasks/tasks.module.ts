@@ -1,9 +1,19 @@
 import { Module } from '@nestjs/common';
-import { CreateTaskUseCase, AssignTaskUseCase } from '../../core/application';
+import {
+  AssignTaskUseCase,
+  CreateTaskUseCase,
+  ListTasksUseCase,
+  UpdateTaskUseCase,
+} from '../../core/application';
 import { TasksController } from './tasks.controller';
 
 @Module({
   controllers: [TasksController],
-  providers: [CreateTaskUseCase, AssignTaskUseCase],
+  providers: [
+    CreateTaskUseCase,
+    ListTasksUseCase,
+    AssignTaskUseCase,
+    UpdateTaskUseCase,
+  ],
 })
 export class TasksModule {}
