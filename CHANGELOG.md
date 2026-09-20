@@ -75,6 +75,14 @@ the CI badge was green the whole time because every step carried
   range above is what makes it exact.
 - `actions/checkout` and `actions/setup-node` move to `v5`, so the workflow
   stops being told off for running its own actions on a deprecated runtime.
+- The run that followed all of the above is the first one where **the
+  `acceptance` job actually executed**: nineteen jobs, all green, including the
+  shared BDD suite against all seven backends on a real Postgres service. It had
+  never run before, for the simple reason that every earlier run failed in
+  `build-and-test` first and `needs:` skipped it.
+- The one annotation left in that run is a `react-refresh/only-export-components`
+  warning on `frontend/02-clean-architecture/src/presentation/contexts/AuthContext.tsx`.
+  It is a warning, not a failure, and it is left visible rather than silenced.
 - `*.tsbuildinfo` is no longer tracked (it had been committed by accident), and
   `07-modular-monolith` gained the `tsconfig.build.json` it was missing.
 - Every backend carries its own `prisma/schema.prisma` + `prisma/migrations`
