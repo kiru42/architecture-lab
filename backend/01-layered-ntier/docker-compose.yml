@@ -1,4 +1,9 @@
-version: '3.8'
+name: architecture-lab-01-layered
+
+# Convenience stack for a single implementation: the Layered/N-tier backend
+# plus its own PostgreSQL. Run it from this directory:
+#
+#   docker compose up --build
 
 services:
   postgres:
@@ -15,26 +20,24 @@ services:
       test: ["CMD-SHELL", "pg_isready -U taskflow"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
       context: ../..
-      dockerfile: backend/01-layered-ntier/Dockerfile
+      dockerfile: docker/backend.Dockerfile
+      args:
+        BACKEND_DIR: 01-layered-ntier
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "postgresql://taskflow:taskflow@postgres:5432/taskflow?schema=public"
-      JWT_SECRET: "dev-secret-change-in-production"
+      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       PORT: 3000
+      NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
-    command: >
-      sh -c "
-        npx prisma migrate deploy --schema=../../shared/prisma/schema.prisma &&
-        node dist/main
-      "
 
 volumes:
   postgres_data:

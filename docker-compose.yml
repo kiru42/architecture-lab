@@ -1,4 +1,16 @@
-version: '3.8'
+name: architecture-lab
+
+# Boot any backend + frontend pair against a shared PostgreSQL:
+#
+#   BACKEND=05-ddd FRONTEND=03-feature-sliced-design docker compose up --build
+#   BACKEND=02-clean-architecture FRONTEND=02-clean-architecture docker compose up --build
+#
+# Backend implementations: 01-layered-ntier, 02-clean-architecture, 03-hexagonal,
+#                          04-onion, 05-ddd, 06-cqrs-es, 07-modular-monolith
+# Frontend implementations: 01-component-layered, 02-clean-architecture,
+#                           03-feature-sliced-design, 04-atomic-only
+#
+# Frontend is served on http://localhost:5173 and proxies /api to the backend.
 
 services:
   postgres:
@@ -15,41 +27,35 @@ services:
       test: ["CMD-SHELL", "pg_isready -U taskflow"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
       context: .
-      dockerfile: ./backend/${BACKEND:-01-layered-ntier}/Dockerfile
+      dockerfile: docker/backend.Dockerfile
       args:
         BACKEND_DIR: ${BACKEND:-01-layered-ntier}
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow
-      JWT_SECRET: dev-secret-change-in-production
-      NODE_ENV: development
+      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      PORT: 3000
+      NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./backend/${BACKEND:-01-layered-ntier}:/app
-      - ./shared:/shared
-      - /app/node_modules
 
   frontend:
     build:
-      context: ./frontend/${FRONTEND:-01-component-layered}
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        FRONTEND_DIR: ${FRONTEND:-01-component-layered}
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_URL: http://localhost:3000
+      - "5173:80"
     depends_on:
       - backend
-    volumes:
-      - ./frontend/${FRONTEND:-01-component-layered}:/app
-      - /app/node_modules
 
 volumes:
   postgres_data:

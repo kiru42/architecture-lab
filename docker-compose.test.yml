@@ -1,4 +1,11 @@
-version: '3.8'
+name: architecture-lab-tests
+
+# Runs the shared BDD acceptance suite against a backend implementation:
+#
+#   BACKEND=02-clean-architecture docker compose -f docker-compose.test.yml up --build \
+#     --abort-on-container-exit --exit-code-from acceptance
+#
+# The acceptance suite lives in shared/acceptance and is implementation-agnostic.
 
 services:
   postgres:
@@ -7,26 +14,42 @@ services:
       POSTGRES_USER: taskflow
       POSTGRES_PASSWORD: taskflow
       POSTGRES_DB: taskflow
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U taskflow"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
       context: .
-      dockerfile: ./backend/${BACKEND:-01-layered-ntier}/Dockerfile
+      dockerfile: docker/backend.Dockerfile
       args:
         BACKEND_DIR: ${BACKEND:-01-layered-ntier}
-    ports:
-      - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow
-      JWT_SECRET: dev-secret-change-in-production
+      DATABASE_URL: postgresql://taskflow:taskflow@postgres:5432/taskflow?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      PORT: 3000
       NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/projects || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  acceptance:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./shared/acceptance:/app
+    environment:
+      BACKEND_URL: http://backend:3000
+    command: sh -c "npm ci && npm test"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes: {}
