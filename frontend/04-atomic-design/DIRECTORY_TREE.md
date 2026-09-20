@@ -3,7 +3,7 @@
 ## Complete Project Structure
 
 ```
-04-atomic-only/
+04-atomic-design/
 │
 ├── 📄 Configuration Files
 │   ├── package.json              # Dependencies and scripts

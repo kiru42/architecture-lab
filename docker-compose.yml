@@ -8,7 +8,7 @@ name: architecture-lab
 # Backend implementations: 01-layered-ntier, 02-clean-architecture, 03-hexagonal,
 #                          04-onion, 05-ddd, 06-cqrs-es, 07-modular-monolith
 # Frontend implementations: 01-component-layered, 02-clean-architecture,
-#                           03-feature-sliced-design, 04-atomic-only
+#                           03-feature-sliced-design, 04-atomic-design
 #
 # Frontend is served on http://localhost:5173 and proxies /api to the backend.
 

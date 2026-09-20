@@ -65,7 +65,7 @@ architecture-lab/
 │   ├── 01-component-layered/
 │   ├── 02-clean-architecture/
 │   ├── 03-feature-sliced-design/
-│   └── 04-atomic-only/
+│   └── 04-atomic-design/
 ├── docs/
 │   ├── adrs/            # Architecture Decision Records
 │   └── comparison-matrix.md
@@ -145,7 +145,7 @@ BACKEND=01-layered-ntier FRONTEND=01-component-layered docker compose up --build
 # BACKEND: 01-layered-ntier, 02-clean-architecture, 03-hexagonal,
 #          04-onion, 05-ddd, 06-cqrs-es, 07-modular-monolith
 # FRONTEND: 01-component-layered, 02-clean-architecture,
-#           03-feature-sliced-design, 04-atomic-only
+#           03-feature-sliced-design, 04-atomic-design
 ```
 
 Both Dockerfiles are generic and parameterised (`BACKEND_DIR` / `FRONTEND_DIR`),

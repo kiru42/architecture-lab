@@ -5,7 +5,7 @@
 ### 📁 Project Structure
 
 ```
-/home/kiru42/architecture-lab/frontend/04-atomic-only/
+/home/kiru42/architecture-lab/frontend/04-atomic-design/
 ├── src/
 │   ├── atoms/                    # 6 components (Button, Input, Label, Checkbox, Card, Badge)
 │   ├── molecules/                # 5 components (FormField, SearchBox, UserBadge, ProjectCard, TaskCard)
@@ -217,7 +217,7 @@
 ### 🚀 Getting Started
 
 ```bash
-cd /home/kiru42/architecture-lab/frontend/04-atomic-only
+cd /home/kiru42/architecture-lab/frontend/04-atomic-design
 npm install
 npm run dev
 ```

@@ -43,7 +43,7 @@ jobs:
           - frontend/01-component-layered
           - frontend/02-clean-architecture
           - frontend/03-feature-sliced-design
-          - frontend/04-atomic-only
+          - frontend/04-atomic-design
 
     steps:
       - uses: actions/checkout@v4

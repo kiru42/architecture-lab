@@ -37,7 +37,7 @@ The `lint-and-test` job runs in parallel for each implementation:
 - `frontend/01-component-layered`
 - `frontend/02-clean-architecture`
 - `frontend/03-feature-sliced-design`
-- `frontend/04-atomic-only`
+- `frontend/04-atomic-design`
 
 ### Acceptance Tests (Disabled)
 

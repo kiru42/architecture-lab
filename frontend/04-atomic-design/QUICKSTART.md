@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-cd /home/kiru42/architecture-lab/frontend/04-atomic-only
+cd /home/kiru42/architecture-lab/frontend/04-atomic-design
 npm install
 ```
 
