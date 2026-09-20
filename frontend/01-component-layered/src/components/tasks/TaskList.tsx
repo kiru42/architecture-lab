@@ -4,11 +4,10 @@ interface TaskListProps {
   tasks: Task[];
   onSelect: (task: Task) => void;
   onUpdate: (id: string, data: Partial<Task>) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
   selectedTaskId: string | null;
 }
 
-export function TaskList({ tasks, onSelect, onUpdate, onDelete, selectedTaskId }: TaskListProps) {
+export function TaskList({ tasks, onSelect, onUpdate, selectedTaskId }: TaskListProps) {
   const handleToggleComplete = async (task: Task) => {
     await onUpdate(task.id, { completed: !task.completed });
   };
@@ -23,6 +22,7 @@ export function TaskList({ tasks, onSelect, onUpdate, onDelete, selectedTaskId }
         tasks.map((task) => (
           <div
             key={task.id}
+            data-testid="task-item"
             className={`p-4 rounded-lg border ${
               selectedTaskId === task.id
                 ? 'border-blue-500 bg-blue-50'
@@ -32,12 +32,14 @@ export function TaskList({ tasks, onSelect, onUpdate, onDelete, selectedTaskId }
             <div className="flex items-start gap-3">
               <input
                 type="checkbox"
+                data-testid="task-toggle"
                 checked={task.completed}
                 onChange={() => handleToggleComplete(task)}
                 className="mt-1 h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <div className="flex-1 min-w-0">
                 <button
+                  data-testid="task-select"
                   onClick={() => onSelect(task)}
                   className="text-left w-full"
                 >
@@ -56,12 +58,7 @@ export function TaskList({ tasks, onSelect, onUpdate, onDelete, selectedTaskId }
                   )}
                 </button>
               </div>
-              <button
-                onClick={() => onDelete(task.id)}
-                className="text-red-600 hover:text-red-700 text-sm"
-              >
-                Delete
-              </button>
+
             </div>
           </div>
         ))

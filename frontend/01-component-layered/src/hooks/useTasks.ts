@@ -16,7 +16,7 @@ export function useTasks(projectId: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const { tasks } = await taskService.getTasks(projectId);
+      const tasks = await taskService.getTasks(projectId);
       setTasks(tasks);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tasks');
@@ -31,7 +31,7 @@ export function useTasks(projectId: string | null) {
 
   const createTask = async (title: string, description: string, projectId: string) => {
     try {
-      const { task } = await taskService.createTask(title, description, projectId);
+      const task = await taskService.createTask(title, description, projectId);
       setTasks((prev) => [...prev, task]);
       return task;
     } catch (err) {
@@ -40,9 +40,12 @@ export function useTasks(projectId: string | null) {
     }
   };
 
-  const updateTask = async (id: string, data: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>) => {
+  const updateTask = async (
+    id: string,
+    data: Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>,
+  ) => {
     try {
-      const { task } = await taskService.updateTask(id, data);
+      const task = await taskService.updateTask(id, data);
       setTasks((prev) => prev.map((t) => (t.id === id ? task : t)));
       return task;
     } catch (err) {
@@ -51,15 +54,5 @@ export function useTasks(projectId: string | null) {
     }
   };
 
-  const deleteTask = async (id: string) => {
-    try {
-      await taskService.deleteTask(id);
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete task');
-      throw err;
-    }
-  };
-
-  return { tasks, loading, error, createTask, updateTask, deleteTask, refetch: loadTasks };
+  return { tasks, loading, error, createTask, updateTask, refetch: loadTasks };
 }

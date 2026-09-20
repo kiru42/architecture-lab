@@ -23,6 +23,7 @@ export function TaskForm({ projectId, onSubmit }: TaskFormProps) {
   if (!isOpen) {
     return (
       <button
+        data-testid="task-create-toggle"
         onClick={() => setIsOpen(true)}
         className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600"
       >
@@ -32,10 +33,15 @@ export function TaskForm({ projectId, onSubmit }: TaskFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-lg border border-gray-200">
+    <form
+    onSubmit={handleSubmit}
+    data-testid="task-form"
+    className="p-4 bg-white rounded-lg border border-gray-200"
+  >
       <div className="space-y-3">
         <input
           type="text"
+          data-testid="task-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Task title"
@@ -43,6 +49,7 @@ export function TaskForm({ projectId, onSubmit }: TaskFormProps) {
           autoFocus
         />
         <textarea
+          data-testid="task-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description (optional)"
@@ -52,6 +59,7 @@ export function TaskForm({ projectId, onSubmit }: TaskFormProps) {
         <div className="flex gap-2">
           <button
             type="submit"
+            data-testid="task-submit"
             className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Create

@@ -20,6 +20,7 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
   if (!isOpen) {
     return (
       <button
+        data-testid="project-create-toggle"
         onClick={() => setIsOpen(true)}
         className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600"
       >
@@ -29,10 +30,15 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-lg border border-gray-200">
+    <form
+    onSubmit={handleSubmit}
+    data-testid="project-form"
+    className="p-4 bg-white rounded-lg border border-gray-200"
+  >
       <div className="space-y-3">
         <input
           type="text"
+          data-testid="project-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Project name"
@@ -42,6 +48,7 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
         <div className="flex gap-2">
           <button
             type="submit"
+            data-testid="project-submit"
             className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Create

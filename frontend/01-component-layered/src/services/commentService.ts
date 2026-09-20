@@ -2,12 +2,17 @@ import { Comment } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
+/**
+ * Comments hang off their task: `GET` and `POST` go through
+ * `/tasks/{id}/comments`. Deletion is the one place the contract exposes a
+ * top-level resource, `/comments/{id}`.
+ */
 export const commentService = {
-  async getComments(taskId: string): Promise<{ comments: Comment[] }> {
+  async getComments(taskId: string): Promise<Comment[]> {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE}/comments?taskId=${taskId}`, {
+    const response = await fetch(`${API_BASE}/tasks/${taskId}/comments`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     if (!response.ok) {
@@ -16,15 +21,15 @@ export const commentService = {
     return response.json();
   },
 
-  async createComment(content: string, taskId: string): Promise<{ comment: Comment }> {
+  async createComment(content: string, taskId: string): Promise<Comment> {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE}/comments`, {
+    const response = await fetch(`${API_BASE}/tasks/${taskId}/comments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content, taskId }),
+      body: JSON.stringify({ content }),
     });
     if (!response.ok) {
       throw new Error('Failed to create comment');
@@ -37,7 +42,7 @@ export const commentService = {
     const response = await fetch(`${API_BASE}/comments/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     if (!response.ok) {

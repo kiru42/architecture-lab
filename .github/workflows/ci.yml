@@ -193,3 +193,142 @@ jobs:
           kill "$BACKEND_PID" 2>/dev/null || true
 
           exit $status
+
+  # ---------------------------------------------------------------------------
+  # The frontend gate: the shared end-to-end suite, driven through a real
+  # browser against a real backend.
+  #
+  # The backend is fixed to 01-layered-ntier because it is the only
+  # implementation with a WebSocket gateway, and the notification scenario
+  # needs one. The frontend is what varies: each implementation is judged on
+  # its own ability to drive the same contract through its own UI.
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: e2e / ${{ matrix.frontend }}
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    strategy:
+      fail-fast: false
+      matrix:
+        frontend:
+          - 01-component-layered
+          - 02-clean-architecture
+          - 03-feature-sliced-design
+          - 04-atomic-design
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: taskflow
+          POSTGRES_PASSWORD: taskflow
+          POSTGRES_DB: taskflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://taskflow:taskflow@localhost:5432/taskflow?schema=public
+      JWT_SECRET: ci-secret-not-for-production
+      PORT: '3000'
+      FRONTEND_PORT: '5199'
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/01-layered-ntier/package-lock.json
+            frontend/${{ matrix.frontend }}/package-lock.json
+            shared/e2e/package-lock.json
+
+      - name: Install backend
+        working-directory: backend/01-layered-ntier
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend/01-layered-ntier
+        run: npm run prisma:generate
+
+      - name: Build backend
+        working-directory: backend/01-layered-ntier
+        run: npm run build
+
+      - name: Apply migrations
+        working-directory: backend/01-layered-ntier
+        run: npm run prisma:deploy
+
+      - name: Install frontend
+        working-directory: frontend/${{ matrix.frontend }}
+        run: npm ci
+
+      - name: Install e2e suite
+        working-directory: shared/e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Boot the backend and the frontend, then run the shared e2e suite
+        run: |
+          ( cd backend/01-layered-ntier
+            nohup node dist/main > /tmp/backend.log 2>&1 &
+            echo $! > /tmp/backend.pid )
+
+          ( cd frontend/${{ matrix.frontend }}
+            API_PROXY_TARGET=http://localhost:3000 \
+              nohup npx vite --port "$FRONTEND_PORT" --strictPort \
+              > /tmp/frontend.log 2>&1 &
+            echo $! > /tmp/frontend.pid )
+
+          wait_for() {
+            for _ in $(seq 1 "$2"); do
+              curl -s -o /dev/null --max-time 2 "$1" && return 0
+              sleep 2
+            done
+            return 1
+          }
+
+          if ! wait_for http://localhost:3000/projects 45; then
+            echo "::error::backend never became reachable"
+            tail -60 /tmp/backend.log
+            exit 1
+          fi
+
+          if ! wait_for "http://localhost:$FRONTEND_PORT" 45; then
+            echo "::error::frontend never became reachable"
+            tail -60 /tmp/frontend.log
+            exit 1
+          fi
+
+          set +e
+          ( cd shared/e2e
+            FRONTEND_URL="http://localhost:$FRONTEND_PORT" \
+            API_URL=http://localhost:3000 \
+            npx playwright test )
+          status=$?
+          set -e
+
+          echo "----- frontend log (tail) -----"
+          tail -30 /tmp/frontend.log
+          echo "----- backend log (tail) -----"
+          tail -30 /tmp/backend.log
+
+          kill "$(cat /tmp/frontend.pid)" 2>/dev/null || true
+          kill "$(cat /tmp/backend.pid)" 2>/dev/null || true
+
+          exit $status
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.frontend }}
+          path: shared/e2e/playwright-report
+          retention-days: 7

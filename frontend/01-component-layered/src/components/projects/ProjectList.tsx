@@ -5,11 +5,10 @@ interface ProjectListProps {
   projects: Project[];
   onSelect: (project: Project) => void;
   onUpdate: (id: string, data: { name?: string; archived?: boolean }) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
   selectedProjectId: string | null;
 }
 
-export function ProjectList({ projects, onSelect, onUpdate, onDelete, selectedProjectId }: ProjectListProps) {
+export function ProjectList({ projects, onSelect, onUpdate, selectedProjectId }: ProjectListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
 
@@ -32,6 +31,7 @@ export function ProjectList({ projects, onSelect, onUpdate, onDelete, selectedPr
       {projects.map((project) => (
         <div
           key={project.id}
+          data-testid="project-item"
           className={`p-4 rounded-lg border ${
             selectedProjectId === project.id
               ? 'border-blue-500 bg-blue-50'
@@ -63,6 +63,7 @@ export function ProjectList({ projects, onSelect, onUpdate, onDelete, selectedPr
           ) : (
             <div className="flex items-center justify-between">
               <button
+                data-testid="project-select"
                 onClick={() => onSelect(project)}
                 className="flex-1 text-left font-medium"
               >
@@ -81,12 +82,6 @@ export function ProjectList({ projects, onSelect, onUpdate, onDelete, selectedPr
                   className="text-sm text-gray-600 hover:text-gray-700"
                 >
                   {project.archived ? 'Unarchive' : 'Archive'}
-                </button>
-                <button
-                  onClick={() => onDelete(project.id)}
-                  className="text-sm text-red-600 hover:text-red-700"
-                >
-                  Delete
                 </button>
               </div>
             </div>

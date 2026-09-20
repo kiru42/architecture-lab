@@ -1,4 +1,5 @@
 import { useAuth } from '../../hooks/useAuth';
+import { NotificationCenter } from './NotificationCenter';
 
 export function Header() {
   const { user, signout } = useAuth();
@@ -13,7 +14,9 @@ export function Header() {
           </div>
           {user && (
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-700">{user.name}</span>
+              <span data-testid="header-user" className="text-sm text-gray-700">
+                {user.name}
+              </span>
               <button
                 onClick={signout}
                 className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
@@ -24,6 +27,9 @@ export function Header() {
           )}
         </div>
       </div>
+
+      {/* Mounted here so the socket lives as long as an authenticated page. */}
+      <NotificationCenter />
     </header>
   );
 }

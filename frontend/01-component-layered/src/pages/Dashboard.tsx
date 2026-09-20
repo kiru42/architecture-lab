@@ -10,9 +10,9 @@ import { TaskDetail } from '../components/tasks/TaskDetail';
 import { Project, Task } from '../types';
 
 export function Dashboard() {
-  const { projects, createProject, updateProject, deleteProject } = useProjects();
+  const { projects, createProject, updateProject } = useProjects();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const { tasks, createTask, updateTask, deleteTask } = useTasks(selectedProject?.id || null);
+  const { tasks, createTask, updateTask } = useTasks(selectedProject?.id || null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleProjectSelect = (project: Project) => {
@@ -57,7 +57,6 @@ export function Dashboard() {
               projects={projects}
               onSelect={handleProjectSelect}
               onUpdate={handleUpdateProject}
-              onDelete={deleteProject}
               selectedProjectId={selectedProject?.id || null}
             />
           </div>
@@ -76,7 +75,6 @@ export function Dashboard() {
                   tasks={tasks}
                   onSelect={handleTaskSelect}
                   onUpdate={handleUpdateTask}
-                  onDelete={deleteTask}
                   selectedTaskId={selectedTask?.id || null}
                 />
               </>

@@ -11,7 +11,7 @@ export function useProjects() {
     try {
       setLoading(true);
       setError(null);
-      const { projects } = await projectService.getProjects();
+      const projects = await projectService.getProjects();
       setProjects(projects);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load projects');
@@ -26,7 +26,7 @@ export function useProjects() {
 
   const createProject = async (name: string) => {
     try {
-      const { project } = await projectService.createProject(name);
+      const project = await projectService.createProject(name);
       setProjects((prev) => [...prev, project]);
       return project;
     } catch (err) {
@@ -37,7 +37,7 @@ export function useProjects() {
 
   const updateProject = async (id: string, data: { name?: string; archived?: boolean }) => {
     try {
-      const { project } = await projectService.updateProject(id, data);
+      const project = await projectService.updateProject(id, data);
       setProjects((prev) => prev.map((p) => (p.id === id ? project : p)));
       return project;
     } catch (err) {
@@ -46,15 +46,5 @@ export function useProjects() {
     }
   };
 
-  const deleteProject = async (id: string) => {
-    try {
-      await projectService.deleteProject(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete project');
-      throw err;
-    }
-  };
-
-  return { projects, loading, error, createProject, updateProject, deleteProject, refetch: loadProjects };
+  return { projects, loading, error, createProject, updateProject, refetch: loadProjects };
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 export function SignupForm() {
@@ -6,11 +7,14 @@ export function SignupForm() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const { signup, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signup(email, name, password);
+      // Same reason as SigninForm: the token is stored, the router is not moved.
+      navigate('/');
     } catch {
       // Error is handled by useAuth
     }
@@ -25,7 +29,9 @@ export function SignupForm() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>
+            <div data-testid="auth-error" className="bg-red-50 text-red-600 p-3 rounded">
+              {error}
+            </div>
           )}
           <div className="space-y-4">
             <div>
@@ -34,6 +40,7 @@ export function SignupForm() {
               </label>
               <input
                 id="name"
+                data-testid="signup-name"
                 type="text"
                 required
                 value={name}
@@ -47,6 +54,7 @@ export function SignupForm() {
               </label>
               <input
                 id="email"
+                data-testid="signup-email"
                 type="email"
                 required
                 value={email}
@@ -60,6 +68,7 @@ export function SignupForm() {
               </label>
               <input
                 id="password"
+                data-testid="signup-password"
                 type="password"
                 required
                 value={password}
@@ -70,6 +79,7 @@ export function SignupForm() {
           </div>
           <button
             type="submit"
+            data-testid="signup-submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Sign Up

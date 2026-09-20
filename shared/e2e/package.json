@@ -1,0 +1,14 @@
+{
+  "name": "@architecture-lab/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared end-to-end suite — every frontend implementation must pass this against a real backend",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "install-browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

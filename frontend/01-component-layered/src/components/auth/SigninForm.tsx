@@ -1,15 +1,21 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 export function SigninForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signin, error } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signin(email, password);
+      // Each component owns its own auth state, so signing in does not by
+      // itself move the router: without this the form would store the token,
+      // stay on /signin, and the visitor would never reach the dashboard.
+      navigate('/');
     } catch {
       // Error is handled by useAuth
     }
@@ -24,7 +30,9 @@ export function SigninForm() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>
+            <div data-testid="auth-error" className="bg-red-50 text-red-600 p-3 rounded">
+              {error}
+            </div>
           )}
           <div className="space-y-4">
             <div>
@@ -33,6 +41,7 @@ export function SigninForm() {
               </label>
               <input
                 id="email"
+                data-testid="signin-email"
                 type="email"
                 required
                 value={email}
@@ -46,6 +55,7 @@ export function SigninForm() {
               </label>
               <input
                 id="password"
+                data-testid="signin-password"
                 type="password"
                 required
                 value={password}
@@ -56,6 +66,7 @@ export function SigninForm() {
           </div>
           <button
             type="submit"
+            data-testid="signin-submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Sign In

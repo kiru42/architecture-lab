@@ -116,6 +116,7 @@ export function TaskDetail({ task, onClose, onUpdate }: TaskDetailProps) {
               
               <form onSubmit={handleAddComment} className="mb-4">
                 <textarea
+                  data-testid="comment-content"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
@@ -124,6 +125,7 @@ export function TaskDetail({ task, onClose, onUpdate }: TaskDetailProps) {
                 />
                 <button
                   type="submit"
+                  data-testid="comment-submit"
                   className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Add Comment
@@ -132,7 +134,11 @@ export function TaskDetail({ task, onClose, onUpdate }: TaskDetailProps) {
 
               <div className="space-y-3">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                  <div
+                    key={comment.id}
+                    data-testid="comment-item"
+                    className="bg-gray-50 p-3 rounded-lg"
+                  >
                     <div className="flex items-start justify-between">
                       <p className="flex-1 text-gray-700">{comment.content}</p>
                       <button

@@ -16,7 +16,7 @@ export function useComments(taskId: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const { comments } = await commentService.getComments(taskId);
+      const comments = await commentService.getComments(taskId);
       setComments(comments);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load comments');
@@ -31,7 +31,7 @@ export function useComments(taskId: string | null) {
 
   const createComment = async (content: string, taskId: string) => {
     try {
-      const { comment } = await commentService.createComment(content, taskId);
+      const comment = await commentService.createComment(content, taskId);
       setComments((prev) => [...prev, comment]);
       return comment;
     } catch (err) {

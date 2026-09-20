@@ -15,6 +15,13 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // Socket.IO needs its own entry: `ws: true` is what upgrades the
+      // connection, and the path is not under /api.
+      '/socket.io': {
+        target: API_PROXY_TARGET,
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
 });
