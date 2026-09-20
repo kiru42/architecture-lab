@@ -6,3 +6,6 @@ export interface ITaskRepository {
   findById(id: TaskId): Promise<Task | null>;
   findByProjectId(projectId: string): Promise<Task[]>;
 }
+
+/** DI token. The interface is the port; this Symbol is how Nest finds it. */
+export const ITaskRepository = Symbol('ITaskRepository');

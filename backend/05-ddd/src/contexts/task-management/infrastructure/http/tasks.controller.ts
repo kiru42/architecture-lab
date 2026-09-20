@@ -1,33 +1,73 @@
-import { Controller, Post, Get, Patch, Body, Query, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreateTaskDto, UpdateTaskDto } from './task.dto';
 import { CreateTaskCommand } from '../../application/commands/create-task.command';
-import { CompleteTaskCommand } from '../../application/commands/complete-task.command';
+import { UpdateTaskCommand } from '../../application/commands/update-task.command';
 import { GetTasksQuery } from '../../application/queries/get-tasks.query';
+import { Task } from '../../domain/aggregates/task.aggregate';
+import { JwtAuthGuard } from '../../../../shared-kernel/infrastructure/http/jwt-auth.guard';
+import { CurrentUser } from '../../../../shared-kernel/infrastructure/http/current-user.decorator';
 
-class CreateTaskDto {
-  title: string;
-  description?: string;
-  projectId: string;
+/** The aggregate is shaped like the frozen Task schema, so this is a 1:1 map. */
+function toResponse(task: Task) {
+  return {
+    id: task.getId().getValue(),
+    title: task.getTitle(),
+    description: task.getDescription(),
+    completed: task.isCompleted(),
+    dueDate: task.getDueDate(),
+    projectId: task.getProjectId(),
+    assigneeId: task.getAssigneeId(),
+    createdAt: task.getCreatedAt(),
+    updatedAt: task.getUpdatedAt(),
+  };
 }
 
-@Controller('tasks')
+@Controller()
+@UseGuards(JwtAuthGuard)
 export class TasksController {
-  constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
-  @Post()
-  async create(@Body() dto: CreateTaskDto) {
-    const taskId = await this.commandBus.execute(new CreateTaskCommand(dto.title, dto.description || null, dto.projectId));
-    return { taskId };
+  @Get('projects/:id/tasks')
+  async list(@Param('id') projectId: string, @CurrentUser('userId') userId: string) {
+    const tasks: Task[] = await this.queryBus.execute(new GetTasksQuery(projectId, userId));
+    return tasks.map(toResponse);
   }
 
-  @Get()
-  async list(@Query('projectId') projectId: string) {
-    return this.queryBus.execute(new GetTasksQuery(projectId));
+  @Post('projects/:id/tasks')
+  async create(
+    @Param('id') projectId: string,
+    @Body() dto: CreateTaskDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const task: Task = await this.commandBus.execute(
+      new CreateTaskCommand(dto.title, projectId, userId, {
+        description: dto.description ?? null,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        assigneeId: dto.assigneeId ?? null,
+      }),
+    );
+    return toResponse(task);
   }
 
-  @Patch(':id/complete')
-  async complete(@Param('id') id: string) {
-    await this.commandBus.execute(new CompleteTaskCommand(id));
-    return { status: 'completed' };
+  @Patch('tasks/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTaskDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const task: Task = await this.commandBus.execute(
+      new UpdateTaskCommand(id, userId, {
+        title: dto.title,
+        description: dto.description,
+        completed: dto.completed,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+        assigneeId: dto.assigneeId,
+      }),
+    );
+    return toResponse(task);
   }
 }

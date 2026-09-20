@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../../../shared-kernel/infrastructure/prisma.service';
 import { IProjectRepository } from '../../domain/repositories/project.repository';
 import { Project } from '../../domain/aggregates/project.aggregate';
 import { ProjectId } from '../../domain/value-objects/project-id.vo';
@@ -7,22 +7,23 @@ import { ProjectName } from '../../domain/value-objects/project-name.vo';
 
 @Injectable()
 export class PrismaProjectRepository implements IProjectRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async save(project: Project): Promise<void> {
+    const id = project.getId().getValue();
     await this.prisma.project.upsert({
-      where: { id: project.getId().getValue() },
+      where: { id },
       create: {
-        id: project.getId().getValue(),
+        id,
         name: project.getName().getValue(),
-        description: project.getDescription(),
-        ownerId: project.getOwnerId(),
+        archived: project.isArchived(),
+        userId: project.getUserId(),
         createdAt: project.getCreatedAt(),
         updatedAt: project.getUpdatedAt(),
       },
       update: {
         name: project.getName().getValue(),
-        description: project.getDescription(),
+        archived: project.isArchived(),
         updatedAt: project.getUpdatedAt(),
       },
     });
@@ -30,28 +31,32 @@ export class PrismaProjectRepository implements IProjectRepository {
 
   async findById(id: ProjectId): Promise<Project | null> {
     const row = await this.prisma.project.findUnique({ where: { id: id.getValue() } });
-    if (!row) return null;
+    return row ? PrismaProjectRepository.toDomain(row) : null;
+  }
+
+  async findByUserId(userId: string): Promise<Project[]> {
+    const rows = await this.prisma.project.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map(PrismaProjectRepository.toDomain);
+  }
+
+  private static toDomain(row: {
+    id: string;
+    name: string;
+    archived: boolean;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Project {
     return Project.reconstitute(
       ProjectId.create(row.id),
       ProjectName.create(row.name),
-      row.description,
-      row.ownerId,
+      row.archived,
+      row.userId,
       row.createdAt,
       row.updatedAt,
-    );
-  }
-
-  async findByOwnerId(ownerId: string): Promise<Project[]> {
-    const rows = await this.prisma.project.findMany({ where: { ownerId } });
-    return rows.map((r) =>
-      Project.reconstitute(
-        ProjectId.create(r.id),
-        ProjectName.create(r.name),
-        r.description,
-        r.ownerId,
-        r.createdAt,
-        r.updatedAt,
-      ),
     );
   }
 }

@@ -7,3 +7,6 @@ export interface IUserRepository {
   findById(id: UserId): Promise<User | null>;
   findByEmail(email: Email): Promise<User | null>;
 }
+
+/** DI token. The interface is the port; this Symbol is how Nest finds it. */
+export const IUserRepository = Symbol('IUserRepository');

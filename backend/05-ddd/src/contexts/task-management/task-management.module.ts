@@ -1,23 +1,24 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { PrismaClient } from '@prisma/client';
 import { TasksController } from './infrastructure/http/tasks.controller';
 import { PrismaTaskRepository } from './infrastructure/persistence/prisma-task.repository';
 import { CreateTaskHandler } from './application/commands/create-task.handler';
-import { CompleteTaskHandler } from './application/commands/complete-task.handler';
+import { UpdateTaskHandler } from './application/commands/update-task.handler';
 import { GetTasksHandler } from './application/queries/get-tasks.handler';
+import { ITaskRepository } from './domain/repositories/task.repository';
+import { ProjectManagementModule } from '../project-management/project-management.module';
 
-const CommandHandlers = [CreateTaskHandler, CompleteTaskHandler];
+const CommandHandlers = [CreateTaskHandler, UpdateTaskHandler];
 const QueryHandlers = [GetTasksHandler];
 
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule, ProjectManagementModule],
   controllers: [TasksController],
   providers: [
-    PrismaClient,
-    { provide: 'ITaskRepository', useClass: PrismaTaskRepository },
+    { provide: ITaskRepository, useClass: PrismaTaskRepository },
     ...CommandHandlers,
     ...QueryHandlers,
   ],
+  exports: [ITaskRepository],
 })
 export class TaskManagementModule {}
