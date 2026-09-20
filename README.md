@@ -183,6 +183,30 @@ BACKEND=02-clean-architecture docker compose -f docker-compose.test.yml \
 
 ---
 
+## Verification
+
+Everything below is enforced by CI on every push. Run it locally with the same
+commands:
+
+```bash
+./scripts/check-prisma-sync.sh        # each backend ships the frozen schema + migrations
+./scripts/validate-docker-builds.sh   # all 11 images build
+./scripts/validate-acceptance.sh      # the shared BDD suite against all 7 backends
+```
+
+The acceptance suite lives in `shared/acceptance`. It is the executable form of
+`shared/openapi.yaml`, and **every** backend must pass it:
+
+```bash
+BACKEND=05-ddd docker compose -f docker-compose.test.yml \
+  up --build --abort-on-container-exit --exit-code-from acceptance
+```
+
+Scenarios tagged `@websocket` (real-time delivery) need a gateway and are
+excluded from the default run — `npm run test:websocket` runs just those.
+
+---
+
 ## Implementations
 
 ### Backend
@@ -255,7 +279,7 @@ BACKEND=02-clean-architecture docker compose -f docker-compose.test.yml \
 
 - **Language:** TypeScript (strict mode, no `any`)
 - **Backend:** NestJS + Prisma + PostgreSQL
-- **Frontend:** React + React Router v6 + Vite
+- **Frontend:** React 18 + React Router v7 + Vite
 - **API:** REST (OpenAPI) + WebSocket
 - **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD), Playwright (E2E)
 - **Infra:** Docker + Docker Compose + GitHub Actions
@@ -387,17 +411,26 @@ This lab was built iteratively following TDD discipline:
 
 ---
 
-## Next Steps
+## Known Gaps
 
-Potential enhancements for this lab:
+Honest list of what this lab does **not** yet cover:
 
-1. **Mock API servers** for each frontend (in-memory, no PostgreSQL)
-2. **E2E test suite** (Playwright or curl-based)
-3. **Bundle size analysis** (webpack-bundle-analyzer)
-4. **Performance benchmarks** (autocannon, k6)
-5. **Deployment examples** (Kubernetes, Railway, Vercel)
-6. **Observability** (OpenTelemetry, Grafana, Sentry)
-7. **Microservices extraction** (migrate Modular Monolith → separate services)
+1. **Integration tests.** Backends are covered by unit tests and by the shared
+   acceptance suite, but there is no layer of repository/adapter integration
+   tests against a real database.
+2. **Frontend tests.** The four frontends carry a `test` script that reports
+   success without asserting anything.
+3. **Backend #6 is not durable.** Its event store and read models are in-memory,
+   so state is lost on restart. That is a decision about the event store, not
+   about the API contract it already honours.
+4. **Real-time is implemented once.** Only `01-layered-ntier` exposes a WebSocket
+   gateway, so `@websocket` acceptance scenarios only run against it.
+5. **Frontend lint is not gated.** `01-component-layered` and
+   `02-clean-architecture` have a `lint` script but no ESLint config, so CI skips
+   them with a notice.
+6. **Enhancements not attempted:** mock API servers, bundle-size analysis,
+   performance benchmarks, deployment examples, observability, and the
+   microservice extraction from `07-modular-monolith`.
 
 ---
 

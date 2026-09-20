@@ -2,6 +2,85 @@
 
 All notable changes to the Architecture Lab project.
 
+## [1.1.0] - 2026-09-20
+
+### 🎯 Every implementation now honours the contract
+
+The "11/11 Done" of 1.0.0 was aspirational. Five of the eleven implementations
+could not build, boot, or serve the routes the shared OpenAPI spec defines, and
+the CI badge was green the whole time because every step carried
+`continue-on-error: true` and the acceptance job was hardcoded to `if: false`.
+
+### 🐛 Fixed
+
+- **Three backends did not compile at all.** `03-hexagonal`, `04-onion` and
+  `05-ddd` were written against a different database schema (`Project.ownerId`,
+  `Project.description`, `Task.status`, `User.hashedPassword` where the frozen
+  schema has `userId`, no description, `completed` and `password`).
+- **`03-hexagonal` contained two parallel implementations.** The half wired into
+  the modules was the legacy one; the contract-shaped half — with comments —
+  was dead code. The migration to the new half is now finished.
+- **`02` and `06` served a different API.** `/auth/register` and `/auth/login`
+  instead of `/auth/signup` and `/auth/signin`; no `/auth/me`, no
+  `PATCH /projects/:id`, no `PATCH /tasks/:id`, and `06` had no project, task or
+  comment routes whatsoever.
+- **`06`'s projections never ran.** Command handlers appended to the event store
+  but never published to the `EventBus`, so every read model stayed empty for the
+  lifetime of the process.
+- **`01` and `02` shipped no migrations.** Prisma's starter `.gitignore` excludes
+  `prisma/migrations`, so their directories could never be committed and every
+  container started against an empty database.
+- **`02` rejected every request body.** `forbidNonWhitelisted: true` with DTOs
+  that carried no validation decorators.
+- **`07` had no ESLint config**, so its `lint` script crashed rather than linted.
+- **The shared acceptance suite could not run.** It required `ts-node`, which was
+  not a dependency, and it opened the WebSocket *after* the assignment that was
+  supposed to trigger the notification.
+- **Bad frontend API wiring.** `01` targeted its own dev port, `04` targeted a
+  nonexistent backend, and `03`'s proxy was missing the rewrite that strips
+  `/api`. All four now use one relative `/api` convention.
+- **Backends ignored `PORT`**, hardcoding 3003/3005/3006/3007 while compose
+  published 3000.
+
+### 🏗️ Infrastructure
+
+- `31,273` tracked files → `595`. `node_modules` and `dist` had been committed
+  before `.gitignore` existed, so it had never applied to them.
+- Two parameterised Dockerfiles (`docker/backend.Dockerfile`,
+  `docker/frontend.Dockerfile`) replace eleven per-implementation ones of which
+  only two existed.
+- Every backend carries its own `prisma/schema.prisma` + `prisma/migrations`
+  (`./scripts/sync-prisma-schema.sh`), and `./scripts/check-prisma-sync.sh`
+  fails CI if that ever drifts again.
+- CI is now blocking end to end: shared-contract checks, lint, typecheck, build
+  and unit tests for all eleven implementations, then the shared BDD suite
+  against all seven backends.
+
+### 🧪 Tests
+
+- The acceptance suite was rewritten: a Cucumber World instead of module-level
+  state, one scenario per real behaviour, and a genuine WebSocket assertion
+  behind the `@websocket` tag. Playwright was removed — it was opening a browser
+  that no assertion used.
+- Unit tests rewritten where the domain changed and extended with the behaviours
+  that had none: 14 for `04-onion`, 24 for `05-ddd`, 9 for `06-cqrs-es`,
+  14 for `02`.
+
+### 📊 Status
+
+| | Build | Lint | Typecheck | Unit tests | Acceptance |
+|---|---|---|---|---|---|
+| 01-layered-ntier | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 02-clean-architecture | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 03-hexagonal | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 04-onion | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 05-ddd | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 06-cqrs-es | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 07-modular-monolith | ✅ | ✅ | ✅ | ✅ | ✅ |
+| frontend ×4 | ✅ | partial | ✅ | ⚠️ placeholder | n/a |
+
+---
+
 ## [1.0.0] - 2025-05-09
 
 ### 🎉 Project Complete
