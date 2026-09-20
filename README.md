@@ -91,7 +91,7 @@ architecture-lab/
 
 ```bash
 # Install dependencies
-node -v  # v18+ required
+node -v  # v22.22.2+ — see .nvmrc; jsdom 30 refuses to load on anything older
 docker --version  # Docker required for PostgreSQL
 
 # Clone the repo

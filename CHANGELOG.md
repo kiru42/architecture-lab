@@ -60,6 +60,21 @@ the CI badge was green the whole time because every step carried
   finally matches ADR-0023.
 - `scripts/validate-all.sh` runs the whole `build-and-test` matrix locally, the
   same four steps CI runs for each of the eleven implementations.
+- **CI ran on Node 20 while the frontends need Node 22.** GitHub's own log said
+  it plainly: `frontend/01-component-layered`, unit tests, two unhandled
+  `Failed to start forks worker` errors and a `webidl.util.markAsUncloneable is
+  not a function` at the bottom of the stack. Lint, typecheck and build all
+  passed on Node 20; only vitest died, and only in the one frontend that asks
+  for `environment: 'jsdom'`. `jsdom@30` requires `^22.22.2`, `undici@8`
+  requires `>=22.19.0`, and Node 20 exposes neither the `util` internals nor the
+  range they want. Reproduced under `node:20-bookworm-slim` and confirmed fixed
+  under `node:22.22.2-bookworm-slim`.
+  The version now lives in a `.nvmrc` that CI reads with `node-version-file`,
+  one hop away from `node-version: '20'` hardcoded in two jobs, three
+  `Dockerfile`s and a compose service. `.nvmrc` is exact, not `22`: the engines
+  range above is what makes it exact.
+- `actions/checkout` and `actions/setup-node` move to `v5`, so the workflow
+  stops being told off for running its own actions on a deprecated runtime.
 - `*.tsbuildinfo` is no longer tracked (it had been committed by accident), and
   `07-modular-monolith` gained the `tsconfig.build.json` it was missing.
 - Every backend carries its own `prisma/schema.prisma` + `prisma/migrations`

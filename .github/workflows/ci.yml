@@ -17,7 +17,7 @@ jobs:
     name: Shared contracts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Every backend ships the shared Prisma schema and migrations
         run: ./scripts/check-prisma-sync.sh
@@ -46,11 +46,11 @@ jobs:
           - frontend/04-atomic-design
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.component }}/package-lock.json
 
@@ -127,11 +127,11 @@ jobs:
       PORT: '3000'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: |
             backend/${{ matrix.backend }}/package-lock.json

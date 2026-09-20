@@ -12,7 +12,7 @@
 ARG BACKEND_DIR=01-layered-ntier
 
 # ---------------------------------------------------------------- build stage
-FROM node:20-alpine AS builder
+FROM node:22.22.2-alpine AS builder
 
 # Prisma's query engine links against OpenSSL
 RUN apk add --no-cache openssl
@@ -33,7 +33,7 @@ COPY backend/${BACKEND_DIR}/ ./
 RUN npm run build
 
 # -------------------------------------------------------------- runtime stage
-FROM node:20-alpine AS runtime
+FROM node:22.22.2-alpine AS runtime
 
 RUN apk add --no-cache openssl
 

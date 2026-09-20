@@ -13,7 +13,7 @@ ARG FRONTEND_DIR=01-component-layered
 # npm/cli#4828 and refuses to install rollup's `*-linux-x64-musl` optional
 # dependency, which breaks `vite build`. The build output is static files, so
 # the builder's libc is irrelevant — only the runtime base image matters.
-FROM node:20-bookworm-slim AS builder
+FROM node:22.22.2-bookworm-slim AS builder
 
 ARG FRONTEND_DIR
 WORKDIR /build

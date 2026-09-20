@@ -66,6 +66,22 @@ run; only `01-layered-ntier` exposes one, so `npm run test:websocket` inside
 3. If it is a backend, copy the frozen schema with
    `./scripts/sync-prisma-schema.sh` and commit the result.
 
+## Toolchain
+
+`.nvmrc` is the single source of truth for the Node version, and CI reads it
+with `node-version-file` — no version is hardcoded in the workflow. The same
+version is used by `docker/*.Dockerfile` and `docker-compose.test.yml`.
+
+It is pinned to **22.22.2** and not something looser on purpose: `jsdom@30`,
+which `frontend/01-component-layered` needs for its `environment: 'jsdom'`
+tests, declares `engines.node = "^22.22.2 || ^24.15.0 || >=26.0.0"`, and the
+`undici@8` it pulls in wants `>=22.19.0`. On Node 20, `undici` calls
+`webidl.util.markAsUncloneable`, which Node 20's `util` does not expose, so
+loading jsdom throws and every vitest worker dies before running a single test.
+Lint, typecheck and build all pass on Node 20 — only the tests break, which is
+the kind of failure that looks like a flaky test suite until you read the stack
+trace.
+
 ## Running the same checks locally
 
 ```bash

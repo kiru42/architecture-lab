@@ -41,7 +41,7 @@ services:
       retries: 20
 
   acceptance:
-    image: node:20-alpine
+    image: node:22.22.2-alpine
     working_dir: /app
     volumes:
       - ./shared/acceptance:/app
