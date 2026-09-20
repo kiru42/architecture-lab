@@ -1,94 +1,86 @@
 # CI/CD Workflows
 
-## Current Status
+Everything in `.github/workflows/ci.yml` is blocking. If a step can fail without
+failing the build, it is not a check — and that is exactly how three broken
+implementations sat behind a green badge for months.
 
-✅ **CI Pipeline Active** — Runs on every push to `main` and on pull requests
+## Jobs
 
-### What Gets Tested
+### `hygiene` — Shared contracts
 
-The CI pipeline validates all 11 implementations (7 backends + 4 frontends):
+`./scripts/check-prisma-sync.sh` fails if any backend's bundled
+`prisma/schema.prisma` or `prisma/migrations` has drifted from `shared/prisma`.
 
-1. **Type Checking** (blocking) — `tsc --noEmit` must pass
-2. **Linting** (non-blocking) — ESLint errors are reported but don't fail the build
-3. **Unit Tests** (non-blocking) — Tests run when available, failures don't block
+### `build-and-test` — matrix over all eleven implementations
 
-### Why Non-Blocking Tests?
+One job per implementation, in parallel, `fail-fast: false` so every
+implementation reports in a single run:
 
-This is a **reference architecture lab**, not production code. The goal is to compare architectural patterns, not to achieve 100% test coverage. 
+| Step | Command |
+|---|---|
+| Install | `npm ci` |
+| Prisma client | `npm run prisma:generate` (backends only) |
+| Lint | `npm run lint` — skipped with a notice only if the implementation has no ESLint config |
+| Type check | `npm run typecheck` |
+| Build | `npm run build` |
+| Unit tests | `npm test` |
 
-- **Type safety** is the primary quality gate (TypeScript strict mode)
-- **Lint warnings** help spot code smells but don't block iteration speed
-- **Unit tests** are optional (some patterns are easier to test than others)
+Components covered:
 
-### Job Matrix
+**Backends:** `01-layered-ntier`, `02-clean-architecture`, `03-hexagonal`,
+`04-onion`, `05-ddd`, `06-cqrs-es`, `07-modular-monolith`
 
-The `lint-and-test` job runs in parallel for each implementation:
+**Frontends:** `01-component-layered`, `02-clean-architecture`,
+`03-feature-sliced-design`, `04-atomic-design`
 
-**Backends:**
-- `backend/01-layered-ntier`
-- `backend/02-clean-architecture`
-- `backend/03-hexagonal`
-- `backend/04-onion`
-- `backend/05-ddd`
-- `backend/06-cqrs-es`
-- `backend/07-modular-monolith`
+### `acceptance` — the real gate
 
-**Frontends:**
-- `frontend/01-component-layered`
-- `frontend/02-clean-architecture`
-- `frontend/03-feature-sliced-design`
-- `frontend/04-atomic-design`
+One job per backend, against a `postgres:16-alpine` service container. Each job
+installs the backend, generates the Prisma client, builds, applies migrations,
+boots `node dist/main`, waits for it to answer, then runs the shared BDD suite
+from `shared/acceptance` against it with `BACKEND_URL=http://localhost:3000`.
 
-### Acceptance Tests (Disabled)
+This is what proves the implementations agree with each other and with
+`shared/openapi.yaml`. There is no `continue-on-error` left anywhere.
 
-The `acceptance-tests` job is currently disabled (`if: false`) because:
+Locally, `./scripts/validate-acceptance.sh` does the same thing through Docker
+Compose for all seven backends, with an exclusive lock and a non-zero exit code
+on any failure:
 
-1. Acceptance tests require a running backend + database
-2. The shared acceptance test suite (`shared/acceptance/`) is not yet implemented
-3. Each implementation would need its own E2E test setup
+```bash
+./scripts/validate-acceptance.sh                        # all backends
+./scripts/validate-acceptance.sh 04-onion 05-ddd        # a subset
+```
 
-**Future:** Enable acceptance tests when E2E scenarios are written (Cucumber.js + Playwright).
+Scenarios tagged `@websocket` need a gateway and are excluded from the default
+run; only `01-layered-ntier` exposes one, so `npm run test:websocket` inside
+`shared/acceptance` runs just those against it.
 
 ## Adding a New Implementation
 
-When adding a new backend or frontend:
+1. Add the path to the `matrix.component` list in `.github/workflows/ci.yml`
+   (and to `matrix.backend` if it is a backend that must pass acceptance).
+2. Make sure `package.json` provides `lint`, `typecheck`, `build` and `test`.
+   `test` must actually run something: `jest` and `vitest` exit non-zero when
+   they find no test file, which is the desired behaviour here.
+3. If it is a backend, copy the frozen schema with
+   `./scripts/sync-prisma-schema.sh` and commit the result.
 
-1. Add the path to `.github/workflows/ci.yml` in the `matrix.component` array
-2. Ensure `package.json` has these scripts:
-   - `lint` — ESLint check
-   - `typecheck` — TypeScript type validation
-   - `test` — Unit tests (can be a no-op: `echo "No tests" && exit 0`)
-
-## Local Testing
-
-Run the same checks locally before pushing:
+## Running the same checks locally
 
 ```bash
-# Backend example
-cd backend/02-clean-architecture
-npm run lint
-npm run typecheck
-npm run test
+cd backend/02-clean-architecture   # or any frontend
+npm run lint && npm run typecheck && npm run build && npm test
 
-# Frontend example
-cd frontend/03-feature-sliced-design
-npm run lint
-npm run typecheck
-npm run test
+./scripts/check-prisma-sync.sh
+./scripts/validate-docker-builds.sh
+./scripts/validate-acceptance.sh
 ```
 
-## Future Enhancements
+## Not attempted yet
 
-Potential CI/CD improvements:
-
-- ✅ Type checking (done)
-- ⏳ E2E acceptance tests (Cucumber.js + Playwright)
-- ⏳ Bundle size tracking (bundlesize or size-limit)
-- ⏳ Performance benchmarks (autocannon for backends, Lighthouse for frontends)
-- ⏳ Deploy previews (Vercel/Netlify for frontends, Railway for backends)
-- ⏳ Visual regression testing (Percy, Chromatic)
-- ⏳ Dependency security scanning (Dependabot, Snyk)
-
----
-
-**Status:** Last updated 2025-05-09 — CI passing with type checks ✅
+- Bundle-size tracking (size-limit)
+- Performance benchmarks (autocannon, Lighthouse)
+- Deploy previews
+- Visual regression testing
+- Dependency security scanning

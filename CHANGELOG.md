@@ -33,6 +33,13 @@ the CI badge was green the whole time because every step carried
 - **`02` rejected every request body.** `forbidNonWhitelisted: true` with DTOs
   that carried no validation decorators.
 - **`07` had no ESLint config**, so its `lint` script crashed rather than linted.
+- **Frontend lint was dead in three different ways.** `02` had a `lint` script
+  but neither an ESLint config nor the dependencies; `03` and `04` declared
+  `lint` twice in `package.json` (the strict variant lost to the loose one) and
+  `03` pinned eslint 8 + `@typescript-eslint` 6 while its flat config imports
+  `typescript-eslint` 8; `01` had no config at all. All four are now linted with
+  the same eslint 9 flat config, and the warnings it surfaced were fixed rather
+  than silenced.
 - **The shared acceptance suite could not run.** It required `ts-node`, which was
   not a dependency, and it opened the WebSocket *after* the assignment that was
   supposed to trigger the notification.
@@ -49,6 +56,10 @@ the CI badge was green the whole time because every step carried
 - Two parameterised Dockerfiles (`docker/backend.Dockerfile`,
   `docker/frontend.Dockerfile`) replace eleven per-implementation ones of which
   only two existed.
+- `frontend/04-atomic-only` → `frontend/04-atomic-design`, so the directory
+  finally matches ADR-0023.
+- `*.tsbuildinfo` is no longer tracked (it had been committed by accident), and
+  `07-modular-monolith` gained the `tsconfig.build.json` it was missing.
 - Every backend carries its own `prisma/schema.prisma` + `prisma/migrations`
   (`./scripts/sync-prisma-schema.sh`), and `./scripts/check-prisma-sync.sh`
   fails CI if that ever drifts again.
@@ -65,6 +76,16 @@ the CI badge was green the whole time because every step carried
 - Unit tests rewritten where the domain changed and extended with the behaviours
   that had none: 14 for `04-onion`, 24 for `05-ddd`, 9 for `06-cqrs-es`,
   14 for `02`.
+- **The four frontends had no tests at all.** `npm test` was
+  `echo "No tests yet" && exit 0`, which is why nothing noticed that every
+  frontend called `/auth/profile` (a route that does not exist) and unwrapped
+  `{ user }` where the API returns the user directly. They now carry 35 tests
+  (10/10/7/8) over services, repositories, API modules, the zustand store and
+  one hook. Each has its own `vitest.config.ts` and a setup file; the three that
+  run in Node polyfill `localStorage` rather than pulling jsdom in for a `Map`.
+- **`03-hexagonal` and `07-modular-monolith` had no tests either** — `jest`
+  exited 1 with "No tests found". 17 and 23 tests now cover the domain entities,
+  the use cases' ownership checks and the Prisma-backed services.
 
 ### 📊 Status
 
@@ -77,7 +98,10 @@ the CI badge was green the whole time because every step carried
 | 05-ddd | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 06-cqrs-es | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 07-modular-monolith | ✅ | ✅ | ✅ | ✅ | ✅ |
-| frontend ×4 | ✅ | partial | ✅ | ⚠️ placeholder | n/a |
+| frontend ×4 | ✅ | ✅ | ✅ | ✅ | n/a |
+
+Every number above is a command that ran, not an intention. Unit tests: 115
+across the seven backends, 35 across the four frontends.
 
 ---
 

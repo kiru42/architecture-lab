@@ -52,14 +52,14 @@ architecture-lab/
 ├── shared/              # Frozen contracts shared by all implementations
 │   ├── openapi.yaml     # API spec (REST + WebSocket)
 │   ├── prisma/          # Database schema
-│   └── acceptance/      # BDD scenarios (Cucumber + Playwright)
+│   └── acceptance/      # BDD scenarios (Cucumber.js)
 ├── backend/             # Backend implementations
 │   ├── 01-layered-ntier/
 │   ├── 02-clean-architecture/
 │   ├── 03-hexagonal/
 │   ├── 04-onion/
 │   ├── 05-ddd/
-│   ├── 06-cqrs-event-sourcing/
+│   ├── 06-cqrs-es/
 │   └── 07-modular-monolith/
 ├── frontend/            # Frontend implementations
 │   ├── 01-component-layered/
@@ -76,7 +76,9 @@ architecture-lab/
 │   └── nginx.conf
 ├── scripts/
 │   ├── sync-prisma-schema.sh      # Push shared/prisma into every backend
-│   └── validate-docker-builds.sh  # Build every image, print a pass/fail matrix
+│   ├── check-prisma-sync.sh       # Fail if a backend copy drifts from shared/prisma
+│   ├── validate-docker-builds.sh  # Build every image, print a pass/fail matrix
+│   └── validate-acceptance.sh     # Run the shared BDD suite against every backend
 └── docker-compose.yml   # Boot any backend+frontend pair
 ```
 
@@ -126,10 +128,12 @@ To run a second implementation at the same time, point it somewhere else with
 cd frontend/02-clean-architecture
 npm install
 npm run dev  # Starts on http://localhost:5002
-
-# Configure API_BASE_URL in src/infrastructure/api-client.ts
-# to point to your running backend (default: http://localhost:3000)
 ```
+
+Every frontend calls the API through a single relative `/api` prefix. Vite
+proxies it in development (to `API_PROXY_TARGET`, `http://localhost:3000` by
+default) and nginx proxies it in Docker — there is no per-frontend URL to
+configure. Unit tests are run with Vitest (`npm test`).
 
 ### Full Stack (Docker Compose)
 
@@ -163,11 +167,11 @@ To check that every image still builds:
 ### Running Tests
 
 ```bash
-# Backend unit tests (any backend)
+# Backend unit tests (any backend) -- Jest, 115 tests across the seven backends
 cd backend/02-clean-architecture
 npm test
 
-# Frontend unit tests (any frontend)
+# Frontend unit tests (any frontend) -- Vitest, 35 tests across the four frontends
 cd frontend/03-feature-sliced-design
 npm test
 
@@ -193,6 +197,10 @@ commands:
 ./scripts/validate-docker-builds.sh   # all 11 images build
 ./scripts/validate-acceptance.sh      # the shared BDD suite against all 7 backends
 ```
+
+`validate-acceptance.sh` takes an exclusive lock and waits for port 3000 to be
+released between backends, so a run always talks to the implementation it just
+started. It exits non-zero as soon as one backend fails.
 
 The acceptance suite lives in `shared/acceptance`. It is the executable form of
 `shared/openapi.yaml`, and **every** backend must pass it:
@@ -236,42 +244,45 @@ excluded from the default run — `npm run test:websocket` runs just those.
 
 ### Implementation Summary
 
-| Category | Complete | Files | Total LOC |
-|----------|----------|-------|-----------|
-| **Backends** | 7/7 ✅ | 279 | ~7,479 |
-| **Frontends** | 4/4 ✅ | 110 | ~4,741 |
-| **ADRs** | 13/13 ✅ | — | — |
-| **Total** | **24/24** | **389** | **~12,220** |
+Measured from the tree, not estimated:
+
+| Category | Complete | Source files | Source LOC | Test files | Test LOC |
+|----------|----------|--------------|------------|------------|----------|
+| **Backends** | 7/7 | 349 | ~10,282 | 29 | ~2,342 |
+| **Frontends** | 4/4 | 122 | ~5,166 | 8 | ~585 |
+| **ADRs** | 13/13 | — | — | — | — |
+| **Total** | **11/11** | **471** | **~15,448** | **37** | **~2,927** |
 
 ### Backend Implementations (Detailed)
 
-| # | Architecture | Files | LOC | LOC/Feature | Layers |
-|---|--------------|-------|-----|-------------|--------|
-| 01 | Layered N-Tier | 30 | ~1,627 | ~100 | 3 (Controller → Service → Repository) |
-| 02 | Clean Architecture | 37 | ~1,236 | ~167 | 4 (Presentation → Application → Domain → Infrastructure) |
-| 03 | Hexagonal | 79 | ~2,023 | ~237 | 3 (Adapters IN → Core → Adapters OUT) |
-| 04 | Onion | 31 | ~905 | ~106 | 4 (API → Application → Domain → Infrastructure) |
-| 05 | DDD | 49 | ~1,027 | ~250 | Bounded Contexts (Projects, Tasks, Users) |
-| 06 | CQRS + Event Sourcing | 21 | ~600 | ~300 | Commands, Events, Queries, Projections |
-| 07 | Modular Monolith | 32 | ~661 | ~130 | Modules (Projects, Tasks, Auth, Shared) |
+| # | Architecture | Source files | Source LOC | Unit tests | Layers |
+|---|--------------|--------------|------------|------------|--------|
+| 01 | Layered N-Tier | 26 | ~882 | 14 | 3 (Controller → Service → Repository) |
+| 02 | Clean Architecture | 53 | ~1,496 | 14 | 4 (Presentation → Application → Domain → Infrastructure) |
+| 03 | Hexagonal | 61 | ~1,524 | 17 | 3 (Adapters IN → Core → Adapters OUT) |
+| 04 | Onion | 39 | ~1,255 | 14 | 4 (API → Application → Domain → Infrastructure) |
+| 05 | DDD | 78 | ~2,194 | 24 | Bounded Contexts (Projects, Tasks, Users) |
+| 06 | CQRS + Event Sourcing | 60 | ~2,224 | 9 | Commands, Events, Queries, Projections |
+| 07 | Modular Monolith | 32 | ~707 | 23 | Modules (Projects, Tasks, Auth, Shared) |
 
 ### Frontend Implementations (Detailed)
 
-| # | Architecture | Files | LOC | Layers | State Management |
-|---|--------------|-------|-----|--------|------------------|
-| 01 | Component-Layered | 22 | ~1,353 | 2 (components/, hooks/) | React Context |
-| 02 | Clean Architecture | 27 | ~982 | 4 (domain/ → application/ → infrastructure/ → presentation/) | Manual DI Container |
-| 03 | Feature-Sliced Design | 33 | ~1,418 | 6 (app → pages → widgets → features → entities → shared) | Zustand (4 stores) |
-| 04 | Atomic Design | 28 | ~988 | 5 (atoms → molecules → organisms → templates → pages) | React Context |
+| # | Architecture | Source files | Source LOC | Unit tests | Layers | State Management |
+|---|--------------|--------------|------------|------------|--------|------------------|
+| 01 | Component-Layered | 25 | ~1,418 | 10 | 2 (components/, hooks/) | React Context |
+| 02 | Clean Architecture | 30 | ~1,110 | 10 | 4 (domain/ → application/ → infrastructure/ → presentation/) | Manual DI Container |
+| 03 | Feature-Sliced Design | 36 | ~1,536 | 7 | 6 (app → pages → widgets → features → entities → shared) | Zustand (4 stores) |
+| 04 | Atomic Design | 31 | ~1,102 | 8 | 5 (atoms → molecules → organisms → templates → pages) | React Context |
 
 ### Key Metrics
 
-- **Average Backend Size:** ~1,068 LOC, 40 files
-- **Average Frontend Size:** ~1,185 LOC, 27.5 files
-- **Most Verbose Backend:** Hexagonal (79 files, 2,023 LOC)
-- **Most Concise Backend:** CQRS+ES (21 files, 600 LOC)
-- **Most Verbose Frontend:** FSD (33 files, 1,418 LOC)
-- **Most Concise Frontend:** Clean (27 files, 982 LOC)
+- **Average Backend Size:** ~1,469 LOC, 50 files
+- **Average Frontend Size:** ~1,292 LOC, 30.5 files
+- **Largest Backend:** DDD (78 files, 2,194 LOC)
+- **Smallest Backend:** Modular Monolith (32 files, 707 LOC)
+- **Largest Frontend:** Feature-Sliced Design (36 files, 1,536 LOC)
+- **Smallest Frontend:** Atomic Design (31 files, 1,102 LOC)
+- **Unit tests:** 150 in total (115 backend, 35 frontend), all blocking in CI
 
 ---
 
@@ -279,9 +290,9 @@ excluded from the default run — `npm run test:websocket` runs just those.
 
 - **Language:** TypeScript (strict mode, no `any`)
 - **Backend:** NestJS + Prisma + PostgreSQL
-- **Frontend:** React 18 + React Router v7 + Vite
+- **Frontend:** React 18 + Vite + Tailwind CSS (React Router v7 in frontends 01/04, v6 in 02/03)
 - **API:** REST (OpenAPI) + WebSocket
-- **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD), Playwright (E2E)
+- **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD)
 - **Infra:** Docker + Docker Compose + GitHub Actions
 
 ---
@@ -406,8 +417,13 @@ This lab was built iteratively following TDD discipline:
 - **May 2025:** Frontends #2-3 (Clean, FSD) — Domain-centric frontend, Zustand stores
 - **May 2025:** Frontends #1, #4 (Component-Layered, Atomic) — Baseline + Design System patterns
 - **May 2025:** Documentation — 13 ADRs, comparison matrix, complete README
+- **September 2026:** Audit and repair — five implementations were broken behind
+  a green badge. The contract was made executable (acceptance suite run against
+  every backend, blocking CI), the broken implementations were fixed, and unit
+  tests were added where there were none: the four frontends and backends
+  `03` and `07`.
 
-**Total build time:** ~60 hours (including tests, docs, refactoring)
+**Total build time:** ~60 hours to write, plus a full audit and repair pass
 
 ---
 
@@ -418,17 +434,15 @@ Honest list of what this lab does **not** yet cover:
 1. **Integration tests.** Backends are covered by unit tests and by the shared
    acceptance suite, but there is no layer of repository/adapter integration
    tests against a real database.
-2. **Frontend tests.** The four frontends carry a `test` script that reports
-   success without asserting anything.
-3. **Backend #6 is not durable.** Its event store and read models are in-memory,
-   so state is lost on restart. That is a decision about the event store, not
-   about the API contract it already honours.
-4. **Real-time is implemented once.** Only `01-layered-ntier` exposes a WebSocket
+2. **`06-cqrs-es` is not durable.** Its event store and read models are
+   in-memory, so state is lost on restart. That is a decision about the event
+   store, not about the API contract it already honours.
+3. **Real-time is implemented once.** Only `01-layered-ntier` exposes a WebSocket
    gateway, so `@websocket` acceptance scenarios only run against it.
-5. **Frontend lint is not gated.** `01-component-layered` and
-   `02-clean-architecture` have a `lint` script but no ESLint config, so CI skips
-   them with a notice.
-6. **Enhancements not attempted:** mock API servers, bundle-size analysis,
+4. **Component-level frontend tests.** The frontends are covered at the service,
+   repository and store level, plus one hook under `renderHook`; there is no
+   rendered-component test and no end-to-end browser test.
+5. **Enhancements not attempted:** mock API servers, bundle-size analysis,
    performance benchmarks, deployment examples, observability, and the
    microservice extraction from `07-modular-monolith`.
 
