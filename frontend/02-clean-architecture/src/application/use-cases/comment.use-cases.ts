@@ -11,7 +11,7 @@ export class ListCommentsUseCase {
 export class CreateCommentUseCase {
   constructor(private commentRepo: ICommentRepository) {}
   async execute(content: string, taskId: string, token: string): Promise<Comment> {
-    return this.commentRepo.create({ content, taskId }, token);
+    return this.commentRepo.create(taskId, content, token);
   }
 }
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../shared/ui/Button';
 import { useUserStore } from '../entities/user/model/store';
+import { NotificationCenter } from './NotificationCenter';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -32,7 +33,9 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <>
-                <span className="text-sm">Welcome, {user?.name}</span>
+                <span data-testid="header-user" className="text-sm">
+                  Welcome, {user?.name}
+                </span>
                 <Button variant="secondary" onClick={handleSignOut}>
                   Sign Out
                 </Button>
@@ -49,6 +52,9 @@ export const Header: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Mounted here so the socket lives as long as an authenticated page. */}
+        <NotificationCenter />
       </div>
     </header>
   );

@@ -21,10 +21,3 @@ export class UpdateProjectUseCase {
     return this.projectRepo.update(id, data, token);
   }
 }
-
-export class DeleteProjectUseCase {
-  constructor(private projectRepo: IProjectRepository) {}
-  async execute(id: string, token: string): Promise<void> {
-    return this.projectRepo.delete(id, token);
-  }
-}

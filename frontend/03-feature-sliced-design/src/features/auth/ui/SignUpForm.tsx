@@ -12,7 +12,7 @@ export const SignUpForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const setUser = useUserStore((state) => state.setUser);
 
@@ -23,6 +23,8 @@ export const SignUpForm: React.FC = () => {
 
     try {
       const response = await authApi.signup({ email, name, password });
+      // Driving the store (not just local state) is what lets the router leave
+      // the sign-up page once the session opens.
       setUser(response.user);
       navigate('/projects');
     } catch (err) {
@@ -39,6 +41,7 @@ export const SignUpForm: React.FC = () => {
         <Input
           type="text"
           label="Name"
+          data-testid="signup-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -46,6 +49,7 @@ export const SignUpForm: React.FC = () => {
         <Input
           type="email"
           label="Email"
+          data-testid="signup-email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -53,12 +57,13 @@ export const SignUpForm: React.FC = () => {
         <Input
           type="password"
           label="Password"
+          data-testid="signup-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         {error && <p className="text-red-600 text-sm">{error}</p>}
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" data-testid="signup-submit" className="w-full" disabled={loading}>
           {loading ? 'Signing up...' : 'Sign Up'}
         </Button>
       </form>

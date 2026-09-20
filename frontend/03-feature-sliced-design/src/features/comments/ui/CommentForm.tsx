@@ -12,7 +12,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({ taskId, onSuccess }) =
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const addComment = useCommentStore((state) => state.addComment);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,8 +21,10 @@ export const CommentForm: React.FC<CommentFormProps> = ({ taskId, onSuccess }) =
     setLoading(true);
 
     try {
-      const response = await commentApi.create({ content, taskId });
-      addComment(response.comment);
+      // The task is the parent resource in the path, and the body carries
+      // `content` alone — the backend rejects any unknown field.
+      const comment = await commentApi.create(taskId, { content });
+      addComment(comment);
       setContent('');
       onSuccess?.();
     } catch (err) {
@@ -39,6 +41,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({ taskId, onSuccess }) =
           Add Comment
         </label>
         <textarea
+          data-testid="comment-content"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -48,7 +51,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({ taskId, onSuccess }) =
         />
       </div>
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" data-testid="comment-submit" disabled={loading}>
         {loading ? 'Posting...' : 'Post Comment'}
       </Button>
     </form>

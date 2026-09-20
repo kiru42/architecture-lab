@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@domain/entities';
 import { container } from '@infrastructure/di/container';
+import { TOKEN_KEY } from '@infrastructure/storage/tokenStorage';
 
 interface AuthContextValue {
   user: User | null;
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       if (isAuthenticatedUseCase.execute()) {
-        const storedToken = localStorage.getItem('auth_token');
+        const storedToken = localStorage.getItem(TOKEN_KEY);
         if (storedToken) {
           try {
             const profile = await getProfileUseCase.execute(storedToken);

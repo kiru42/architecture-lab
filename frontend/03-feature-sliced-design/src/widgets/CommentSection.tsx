@@ -17,7 +17,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ taskId }) => {
       setLoading(true);
       try {
         const response = await commentApi.getByTask(taskId);
-        setComments(response.comments);
+        setComments(response);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load comments');
       } finally {

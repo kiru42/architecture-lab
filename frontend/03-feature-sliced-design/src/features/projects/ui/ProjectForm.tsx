@@ -12,7 +12,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSuccess }) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [isOpen, setIsOpen] = useState(false);
+
   const addProject = useProjectStore((state) => state.addProject);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,9 +22,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await projectApi.create({ name });
-      addProject(response.project);
+      // POST /projects returns the bare Project.
+      const project = await projectApi.create({ name });
+      addProject(project);
       setName('');
+      setIsOpen(false);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create project');
@@ -32,18 +35,31 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onSuccess }) => {
     }
   };
 
+  if (!isOpen) {
+    return (
+      <Button
+        variant="secondary"
+        data-testid="project-create-toggle"
+        onClick={() => setIsOpen(true)}
+      >
+        + New Project
+      </Button>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
         type="text"
         label="Project Name"
+        data-testid="project-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Enter project name"
         required
       />
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" data-testid="project-submit" disabled={loading}>
         {loading ? 'Creating...' : 'Create Project'}
       </Button>
     </form>

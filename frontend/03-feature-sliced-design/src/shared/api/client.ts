@@ -31,7 +31,7 @@ class ApiClient {
       throw new Error(error.message || `HTTP ${response.status}`);
     }
 
-    return response.json();
+    return response.status === 204 ? (undefined as T) : response.json();
   }
 
   async get<T>(endpoint: string): Promise<T> {

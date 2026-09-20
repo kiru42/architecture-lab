@@ -10,8 +10,8 @@ export class ListTasksUseCase {
 
 export class CreateTaskUseCase {
   constructor(private taskRepo: ITaskRepository) {}
-  async execute(data: Partial<Task>, token: string): Promise<Task> {
-    return this.taskRepo.create(data, token);
+  async execute(projectId: string, data: Partial<Task>, token: string): Promise<Task> {
+    return this.taskRepo.create(projectId, data, token);
   }
 }
 
@@ -26,12 +26,5 @@ export class ToggleTaskCompletionUseCase {
   constructor(private taskRepo: ITaskRepository) {}
   async execute(task: Task, token: string): Promise<Task> {
     return this.taskRepo.update(task.id, { completed: !task.completed }, token);
-  }
-}
-
-export class DeleteTaskUseCase {
-  constructor(private taskRepo: ITaskRepository) {}
-  async execute(id: string, token: string): Promise<void> {
-    return this.taskRepo.delete(id, token);
   }
 }

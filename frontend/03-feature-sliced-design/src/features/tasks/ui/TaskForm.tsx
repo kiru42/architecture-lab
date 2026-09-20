@@ -15,7 +15,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ projectId, onSuccess }) => {
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [isOpen, setIsOpen] = useState(false);
+
   const addTask = useTaskStore((state) => state.addTask);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,16 +25,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({ projectId, onSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await taskApi.create({
+      // The project is the path parameter; `projectId` must not travel in the
+      // body (the backend rejects unknown fields). Optional values are omitted
+      // rather than sent empty.
+      const task = await taskApi.create(projectId, {
         title,
-        description,
-        projectId,
+        description: description || undefined,
         dueDate: dueDate || undefined,
       });
-      addTask(response.task);
+      addTask(task);
       setTitle('');
       setDescription('');
       setDueDate('');
+      setIsOpen(false);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create task');
@@ -42,11 +46,24 @@ export const TaskForm: React.FC<TaskFormProps> = ({ projectId, onSuccess }) => {
     }
   };
 
+  if (!isOpen) {
+    return (
+      <Button
+        variant="secondary"
+        data-testid="task-create-toggle"
+        onClick={() => setIsOpen(true)}
+      >
+        + New Task
+      </Button>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
         type="text"
         label="Task Title"
+        data-testid="task-title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter task title"
@@ -60,9 +77,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({ projectId, onSuccess }) => {
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter task description"
+          placeholder="Enter task description (optional)"
           rows={3}
-          required
         />
       </div>
       <Input
@@ -72,7 +88,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({ projectId, onSuccess }) => {
         onChange={(e) => setDueDate(e.target.value)}
       />
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" data-testid="task-submit" disabled={loading}>
         {loading ? 'Creating...' : 'Create Task'}
       </Button>
     </form>

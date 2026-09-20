@@ -1,18 +1,32 @@
-const API_URL = '/api';
+import { Project } from '../types';
 
+const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
+
+/**
+ * The contract returns bare payloads: an array for a collection, the resource
+ * itself for a create or an update. There is no `{ project }` envelope, and
+ * destructuring one is how a list silently becomes `undefined`.
+ *
+ * There is also no `DELETE /projects/{id}` in shared/openapi.yaml, so this
+ * service does not pretend to offer one.
+ */
 export const projectService = {
-  async getProjects() {
+  async getProjects(): Promise<Project[]> {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/projects`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await fetch(`${API_BASE}/projects`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (!res.ok) throw new Error('Failed to fetch projects');
-    return res.json();
+    if (!response.ok) {
+      throw new Error('Failed to fetch projects');
+    }
+    return response.json();
   },
 
-  async createProject(name: string) {
+  async createProject(name: string): Promise<Project> {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/projects`, {
+    const response = await fetch(`${API_BASE}/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,13 +34,15 @@ export const projectService = {
       },
       body: JSON.stringify({ name }),
     });
-    if (!res.ok) throw new Error('Failed to create project');
-    return res.json();
+    if (!response.ok) {
+      throw new Error('Failed to create project');
+    }
+    return response.json();
   },
 
-  async updateProject(id: string, data: { name?: string; archived?: boolean }) {
+  async updateProject(id: string, data: { name?: string; archived?: boolean }): Promise<Project> {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/projects/${id}`, {
+    const response = await fetch(`${API_BASE}/projects/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -34,16 +50,9 @@ export const projectService = {
       },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update project');
-    return res.json();
-  },
-
-  async deleteProject(id: string) {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/projects/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error('Failed to delete project');
+    if (!response.ok) {
+      throw new Error('Failed to update project');
+    }
+    return response.json();
   },
 };

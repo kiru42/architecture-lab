@@ -11,7 +11,7 @@ export const SignInForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const setUser = useUserStore((state) => state.setUser);
 
@@ -22,6 +22,8 @@ export const SignInForm: React.FC = () => {
 
     try {
       const response = await authApi.signin({ email, password });
+      // Driving the store (not just local state) is what lets the router leave
+      // the sign-in page once the session opens.
       setUser(response.user);
       navigate('/projects');
     } catch (err) {
@@ -38,6 +40,7 @@ export const SignInForm: React.FC = () => {
         <Input
           type="email"
           label="Email"
+          data-testid="signin-email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -45,12 +48,17 @@ export const SignInForm: React.FC = () => {
         <Input
           type="password"
           label="Password"
+          data-testid="signin-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <Button type="submit" className="w-full" disabled={loading}>
+        {error && (
+          <p data-testid="auth-error" className="text-red-600 text-sm">
+            {error}
+          </p>
+        )}
+        <Button type="submit" data-testid="signin-submit" className="w-full" disabled={loading}>
           {loading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>

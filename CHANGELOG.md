@@ -11,6 +11,45 @@ could not build, boot, or serve the routes the shared OpenAPI spec defines, and
 the CI badge was green the whole time because every step carried
 `continue-on-error: true` and the acceptance job was hardcoded to `if: false`.
 
+### 🎯 The frontends now honour it too
+
+The backends got a gate — the shared BDD suite, run against all seven in CI. The
+frontends got nothing, and it showed: they had unit tests over mocked `fetch`,
+so nothing ever noticed that **all four** called endpoints the contract does not
+define and unwrapped envelopes the contract does not send.
+
+`shared/e2e` (Playwright, Chromium) now drives a real browser against a real
+backend. Nine of its ten scenarios failed against `01-component-layered` on the
+first run. What it found, in every frontend:
+
+- Every list was `undefined`: the payloads are bare (`Project[]`, `Task`,
+  `Comment`), and all four destructured `{ projects }`, `{ tasks }`, `{ comments }`.
+- Tasks and comments were read and written at `/tasks?projectId=`, `/tasks`,
+  `/comments?taskId=` and `/comments`. None of those routes exist.
+- The UI offered Delete on projects and tasks, calling `DELETE /projects/{id}`
+  and `DELETE /tasks/{id}`. The contract defines neither; the affordances and the
+  service methods are gone.
+- Signing in never left the sign-in page — the token was stored, the router was
+  not moved. The dashboard was unreachable.
+- Completion toggled in the UI was never persisted, so the checkbox snapped back.
+- `02`'s `AuthContext` read a different `localStorage` key than the repository
+  wrote, so a session was never restored on reload. Its `Task.assigneeId` was
+  typed `number` where the contract says string.
+- `03`'s `CommentSection` was mounted nowhere: comments were unreachable.
+
+New in all four, each in its own architecture's style (a port and an adapter in
+`02`, a zustand slice in `03`, a service and a hook in `01` and `04`): an
+authenticated Socket.IO client that consumes `task.assigned`. The backends had
+been emitting that event to a gateway no UI had ever listened to. It connects
+with the JWT in the handshake, defaults to a same-origin path, and shows
+dismissable notifications behind a live indicator driven by real connection
+state — an empty notification list cannot tell "connected" from "not connected
+yet", and a test must know before it acts.
+
+The suite is generic: it runs against whichever frontend `FRONTEND_URL` points
+at, and the UI surface it needs is now a documented contract of its own
+(`shared/e2e/README.md`), alongside the HTTP one in `shared/openapi.yaml`.
+
 ### 🐛 Fixed
 
 - **Three backends did not compile at all.** `03-hexagonal`, `04-onion` and

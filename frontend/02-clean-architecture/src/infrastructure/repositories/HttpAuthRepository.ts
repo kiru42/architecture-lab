@@ -1,8 +1,7 @@
 import { IAuthRepository } from '@domain/ports';
 import { User, AuthResponse } from '@domain/entities';
 import { apiClient } from '../api/api-client';
-
-const TOKEN_KEY = 'auth_token';
+import { TOKEN_KEY } from '../storage/tokenStorage';
 
 export class HttpAuthRepository implements IAuthRepository {
   async signUp(email: string, name: string, password: string): Promise<AuthResponse> {

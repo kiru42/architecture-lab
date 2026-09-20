@@ -172,7 +172,7 @@ To check that every image still builds:
 cd backend/02-clean-architecture
 npm test
 
-# Frontend unit tests (any frontend) -- Vitest, 35 tests across the four frontends
+# Frontend unit tests (any frontend) -- Vitest, 58 tests across the four frontends
 cd frontend/03-feature-sliced-design
 npm test
 
@@ -195,8 +195,11 @@ commands:
 
 ```bash
 ./scripts/check-prisma-sync.sh        # each backend ships the frozen schema + migrations
+./scripts/validate-all.sh             # lint + typecheck + build + unit tests, x11
 ./scripts/validate-docker-builds.sh   # all 11 images build
 ./scripts/validate-acceptance.sh      # the shared BDD suite against all 7 backends
+./scripts/validate-e2e.sh             # the shared browser suite against all 4 frontends
+./scripts/measure-stats.sh            # regenerate the statistics tables below
 ```
 
 `validate-acceptance.sh` takes an exclusive lock and waits for port 3000 to be
@@ -213,6 +216,42 @@ BACKEND=05-ddd docker compose -f docker-compose.test.yml \
 
 Scenarios tagged `@websocket` (real-time delivery) need a gateway and are
 excluded from the default run — `npm run test:websocket` runs just those.
+
+### The frontend gate
+
+Backends are judged by the BDD suite above, which talks HTTP. That suite cannot
+tell whether a human can use the application, so the frontends are judged by a
+second suite that drives a real browser:
+
+```bash
+./scripts/validate-e2e.sh                        # all four frontends
+./scripts/validate-e2e.sh 01-component-layered
+```
+
+It lives in `shared/e2e` (Playwright, Chromium) and runs against whichever
+frontend `FRONTEND_URL` points at — the same implementation-agnostic shape as
+the BDD suite. The backend is fixed to `01-layered-ntier`, the only
+implementation with a WebSocket gateway, because one scenario asserts a live
+notification.
+
+`shared/openapi.yaml` is the contract for the HTTP surface. The browser suite
+needs a second, much smaller contract for the **UI surface**: a documented list
+of `data-testid` hooks every frontend must expose, so the tests can drive four
+structurally different implementations without knowing whether they use
+contexts, stores or props. It is in
+[`shared/e2e/README.md`](shared/e2e/README.md), and it covers auth, projects,
+tasks, comments and notifications.
+
+Two consequences worth stating plainly:
+
+- **The frontends consume `task.assigned`.** The backends have been emitting
+  that event to a gateway no UI had ever listened to. Each frontend now opens an
+  authenticated socket (JWT in the handshake, same-origin path, proxied by Vite
+  and by nginx) and surfaces the notification, with a live indicator driven by
+  real connection state.
+- **Nothing in the UI deletes a project or a task.** The contract defines
+  `DELETE /comments/{id}` and no other delete. Buttons that call an endpoint
+  which does not exist are not a feature, they are a 404 with a nicer label.
 
 ---
 
@@ -249,41 +288,46 @@ Measured from the tree, not estimated:
 
 | Category | Complete | Source files | Source LOC | Test files | Test LOC |
 |----------|----------|--------------|------------|------------|----------|
-| **Backends** | 7/7 | 349 | ~10,282 | 29 | ~2,342 |
-| **Frontends** | 4/4 | 122 | ~5,166 | 8 | ~585 |
+| **Backends** | 7/7 | 349 | ~9,933 | 29 | ~2,311 |
+| **Frontends** | 4/4 | 135 | ~6,023 | 14 | ~1,006 |
 | **ADRs** | 13/13 | — | — | — | — |
-| **Total** | **11/11** | **471** | **~15,448** | **37** | **~2,927** |
+| **Total** | **11/11** | **484** | **~15,956** | **43** | **~3,317** |
+
+`./scripts/measure-stats.sh` regenerates this table; if the two disagree, the
+table is wrong.
 
 ### Backend Implementations (Detailed)
 
 | # | Architecture | Source files | Source LOC | Unit tests | Layers |
 |---|--------------|--------------|------------|------------|--------|
-| 01 | Layered N-Tier | 26 | ~882 | 28 | 3 (Controller → Service → Repository) |
-| 02 | Clean Architecture | 53 | ~1,496 | 14 | 4 (Presentation → Application → Domain → Infrastructure) |
-| 03 | Hexagonal | 61 | ~1,524 | 17 | 3 (Adapters IN → Core → Adapters OUT) |
-| 04 | Onion | 39 | ~1,255 | 14 | 4 (API → Application → Domain → Infrastructure) |
-| 05 | DDD | 78 | ~2,194 | 24 | Bounded Contexts (Projects, Tasks, Users) |
-| 06 | CQRS + Event Sourcing | 60 | ~2,224 | 9 | Commands, Events, Queries, Projections |
-| 07 | Modular Monolith | 32 | ~707 | 23 | Modules (Projects, Tasks, Auth, Shared) |
+| 01 | Layered N-Tier | 26 | ~856 | 28 | 3 (Controller → Service → Repository) |
+| 02 | Clean Architecture | 53 | ~1,443 | 14 | 4 (Presentation → Application → Domain → Infrastructure) |
+| 03 | Hexagonal | 61 | ~1,463 | 17 | 3 (Adapters IN → Core → Adapters OUT) |
+| 04 | Onion | 39 | ~1,216 | 14 | 4 (API → Application → Domain → Infrastructure) |
+| 05 | DDD | 78 | ~2,116 | 24 | Bounded Contexts (Projects, Tasks, Users) |
+| 06 | CQRS + Event Sourcing | 60 | ~2,164 | 9 | Commands, Events, Queries, Projections |
+| 07 | Modular Monolith | 32 | ~675 | 23 | Modules (Projects, Tasks, Auth, Shared) |
 
 ### Frontend Implementations (Detailed)
 
 | # | Architecture | Source files | Source LOC | Unit tests | Layers | State Management |
 |---|--------------|--------------|------------|------------|--------|------------------|
-| 01 | Component-Layered | 25 | ~1,418 | 10 | 2 (components/, hooks/) | React Context |
-| 02 | Clean Architecture | 30 | ~1,110 | 10 | 4 (domain/ → application/ → infrastructure/ → presentation/) | Manual DI Container |
-| 03 | Feature-Sliced Design | 36 | ~1,536 | 7 | 6 (app → pages → widgets → features → entities → shared) | Zustand (4 stores) |
-| 04 | Atomic Design | 31 | ~1,102 | 8 | 5 (atoms → molecules → organisms → templates → pages) | React Context |
+| 01 | Component-Layered | 25 | ~1,512 | 16 | 2 (components/, hooks/) | Hooks + localStorage |
+| 02 | Clean Architecture | 31 | ~1,145 | 17 | 4 (domain/ → application/ → infrastructure/ → presentation/) | React Context + DI container |
+| 03 | Feature-Sliced Design | 39 | ~1,693 | 13 | 6 (app → pages → widgets → features → entities → shared) | Zustand (5 stores) |
+| 04 | Atomic Design | 40 | ~1,673 | 12 | 5 (atoms → molecules → organisms → templates → pages) | Hooks + localStorage |
 
 ### Key Metrics
 
-- **Average Backend Size:** ~1,469 LOC, 50 files
-- **Average Frontend Size:** ~1,292 LOC, 30.5 files
-- **Largest Backend:** DDD (78 files, 2,194 LOC)
-- **Smallest Backend:** Modular Monolith (32 files, 707 LOC)
-- **Largest Frontend:** Feature-Sliced Design (36 files, 1,536 LOC)
-- **Smallest Frontend:** Atomic Design (31 files, 1,102 LOC)
-- **Unit tests:** 164 in total (129 backend, 35 frontend), all blocking in CI
+- **Average Backend Size:** ~1,419 LOC, 50 files
+- **Average Frontend Size:** ~1,506 LOC, 34 files
+- **Largest Backend:** DDD (78 files, 2,116 LOC)
+- **Smallest Backend:** Modular Monolith (32 files, 675 LOC)
+- **Largest Frontend:** Feature-Sliced Design (39 files, 1,693 LOC)
+- **Smallest Frontend:** Component-Layered (25 files, 1,512 LOC)
+- **Unit tests:** 187 in total (129 backend, 58 frontend), all blocking in CI
+- **End-to-end:** 40 browser tests (10 scenarios × 4 frontends) against a real
+  backend, also blocking
 
 ---
 
@@ -293,7 +337,7 @@ Measured from the tree, not estimated:
 - **Backend:** NestJS + Prisma + PostgreSQL
 - **Frontend:** React 18 + Vite + Tailwind CSS (React Router v7 in frontends 01/04, v6 in 02/03)
 - **API:** REST (OpenAPI) + WebSocket
-- **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD)
+- **Tests:** Jest (backend), Vitest (frontend), Cucumber.js (BDD), Playwright (e2e)
 - **Infra:** Docker + Docker Compose + GitHub Actions
 
 ---

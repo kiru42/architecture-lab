@@ -14,12 +14,10 @@ import {
   ListProjectsUseCase,
   CreateProjectUseCase,
   UpdateProjectUseCase,
-  DeleteProjectUseCase,
   ListTasksUseCase,
   CreateTaskUseCase,
   UpdateTaskUseCase,
   ToggleTaskCompletionUseCase,
-  DeleteTaskUseCase,
   ListCommentsUseCase,
   CreateCommentUseCase,
   DeleteCommentUseCase,
@@ -44,14 +42,12 @@ export const container = {
   listProjectsUseCase: () => new ListProjectsUseCase(projectRepository),
   createProjectUseCase: () => new CreateProjectUseCase(projectRepository),
   updateProjectUseCase: () => new UpdateProjectUseCase(projectRepository),
-  deleteProjectUseCase: () => new DeleteProjectUseCase(projectRepository),
 
   // Task use cases
   listTasksUseCase: () => new ListTasksUseCase(taskRepository),
   createTaskUseCase: () => new CreateTaskUseCase(taskRepository),
   updateTaskUseCase: () => new UpdateTaskUseCase(taskRepository),
   toggleTaskCompletionUseCase: () => new ToggleTaskCompletionUseCase(taskRepository),
-  deleteTaskUseCase: () => new DeleteTaskUseCase(taskRepository),
 
   // Comment use cases
   listCommentsUseCase: () => new ListCommentsUseCase(commentRepository),

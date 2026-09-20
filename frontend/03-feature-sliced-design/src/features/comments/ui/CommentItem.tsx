@@ -32,7 +32,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
   };
 
   return (
-    <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
+    <div data-testid="comment-item" className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <p className="text-gray-800 mb-2">{comment.content}</p>

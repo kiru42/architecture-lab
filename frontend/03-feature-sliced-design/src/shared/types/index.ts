@@ -63,10 +63,9 @@ export interface UpdateProjectDto {
 
 export interface CreateTaskDto {
   title: string;
-  description: string;
-  projectId: string;
-  assigneeId?: string;
+  description?: string;
   dueDate?: string;
+  assigneeId?: string;
 }
 
 export interface UpdateTaskDto {
@@ -74,9 +73,24 @@ export interface UpdateTaskDto {
   description?: string;
   completed?: boolean;
   dueDate?: string;
+  assigneeId?: string;
 }
 
+/**
+ * `POST /tasks/{id}/comments` takes `content` and nothing else: the task is the
+ * path parameter. The backend runs a forbidNonWhitelisted ValidationPipe, so an
+ * extra `taskId` field is a 400 rather than an ignored key.
+ */
 export interface CreateCommentDto {
   content: string;
+}
+
+/**
+ * Emitted by the gateway on the `task.assigned` channel (see the note at the
+ * bottom of shared/openapi.yaml). It carries no task title, only the id.
+ */
+export interface TaskAssignedNotification {
   taskId: string;
+  assigneeId: string;
+  assigneeName: string;
 }

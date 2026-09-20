@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card } from '../../../shared/ui/Card';
-import { Button } from '../../../shared/ui/Button';
 import { Task } from '../../../shared/types';
 import { taskApi } from '../../../entities/task/api';
 import { useTaskStore } from '../../../entities/task/model/store';
@@ -11,30 +10,17 @@ interface TaskItemProps {
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
   const [loading, setLoading] = useState(false);
-  
-  const { updateTask, removeTask } = useTaskStore();
+
+  const updateTask = useTaskStore((state) => state.updateTask);
 
   const handleToggleComplete = async () => {
     setLoading(true);
     try {
-      const response = await taskApi.update(task.id, { completed: !task.completed });
-      updateTask(task.id, response.task);
+      // The contract returns the Task itself, not a `{ task }` envelope.
+      const updated = await taskApi.update(task.id, { completed: !task.completed });
+      updateTask(task.id, updated);
     } catch (err) {
       console.error('Failed to update task:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
-    
-    setLoading(true);
-    try {
-      await taskApi.delete(task.id);
-      removeTask(task.id);
-    } catch (err) {
-      console.error('Failed to delete task:', err);
     } finally {
       setLoading(false);
     }
@@ -55,27 +41,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
           <p className="text-gray-600 mb-2">{task.description}</p>
           <div className="flex gap-4 text-sm text-gray-500">
             <span>Due: {formatDate(task.dueDate)}</span>
-            <span className={task.completed ? 'text-green-600 font-medium' : 'text-yellow-600 font-medium'}>
-              {task.completed ? 'Completed' : 'In Progress'}
-            </span>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            onClick={handleToggleComplete}
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            data-testid="task-toggle"
+            checked={task.completed}
+            onChange={handleToggleComplete}
             disabled={loading}
-          >
-            {task.completed ? 'Reopen' : 'Complete'}
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            Delete
-          </Button>
-        </div>
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          {task.completed ? 'Completed' : 'In progress'}
+        </label>
       </div>
     </Card>
   );

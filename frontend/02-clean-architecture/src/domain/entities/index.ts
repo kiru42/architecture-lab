@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   name: string;
   createdAt: string;
@@ -10,7 +10,7 @@ export interface Project {
   id: string;
   name: string;
   archived: boolean;
-  userId: number;
+  userId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +22,7 @@ export interface Task {
   completed: boolean;
   dueDate: string | null;
   projectId: string;
-  assigneeId: number | null;
+  assigneeId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,7 +31,7 @@ export interface Comment {
   id: string;
   content: string;
   taskId: string;
-  authorId: number;
+  authorId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,4 +40,15 @@ export interface Comment {
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+/**
+ * Payload of the `task.assigned` event the backend gateway emits to the
+ * assignee. It mirrors the contract in shared/openapi.yaml: the event carries
+ * ids plus the assignee's display name, nothing more.
+ */
+export interface TaskAssignedNotification {
+  taskId: string;
+  assigneeId: string;
+  assigneeName: string;
 }

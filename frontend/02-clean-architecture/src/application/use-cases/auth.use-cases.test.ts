@@ -10,7 +10,7 @@ import type { IAuthRepository } from '@domain/ports';
 import type { AuthResponse, User } from '@domain/entities';
 
 const user: User = {
-  id: 1,
+  id: '1',
   email: 'kiru@example.com',
   name: 'Kiru',
   createdAt: '2026-01-01T00:00:00.000Z',

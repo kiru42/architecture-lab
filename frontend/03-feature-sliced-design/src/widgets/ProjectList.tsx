@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProjectItem } from '../features/projects/ui/ProjectItem';
 import { ProjectForm } from '../features/projects/ui/ProjectForm';
 import { Card } from '../shared/ui/Card';
@@ -7,13 +8,14 @@ import { useProjectStore } from '../entities/project/model/store';
 
 export const ProjectList: React.FC = () => {
   const { projects, isLoading, setProjects, setLoading, setError } = useProjectStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadProjects = async () => {
       setLoading(true);
       try {
         const response = await projectApi.getAll();
-        setProjects(response.projects);
+        setProjects(response);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load projects');
       } finally {
@@ -45,7 +47,11 @@ export const ProjectList: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {activeProjects.map((project) => (
-              <ProjectItem key={project.id} project={project} />
+              <ProjectItem
+                key={project.id}
+                project={project}
+                onSelect={() => navigate(`/tasks/${project.id}`)}
+              />
             ))}
           </div>
         )}
@@ -56,7 +62,11 @@ export const ProjectList: React.FC = () => {
           <h2 className="text-2xl font-bold mb-4">Archived Projects</h2>
           <div className="space-y-4">
             {archivedProjects.map((project) => (
-              <ProjectItem key={project.id} project={project} />
+              <ProjectItem
+                key={project.id}
+                project={project}
+                onSelect={() => navigate(`/tasks/${project.id}`)}
+              />
             ))}
           </div>
         </div>

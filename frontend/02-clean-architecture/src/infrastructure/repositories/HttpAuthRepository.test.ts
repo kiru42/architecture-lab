@@ -10,12 +10,12 @@ vi.mock('../api/api-client', () => ({
 }));
 
 import { HttpAuthRepository } from './HttpAuthRepository';
+import { TOKEN_KEY } from '../storage/tokenStorage';
 import type { AuthResponse, User } from '@domain/entities';
 
-const TOKEN_KEY = 'auth_token';
 
 const user: User = {
-  id: 1,
+  id: '1',
   email: 'kiru@example.com',
   name: 'Kiru',
   createdAt: '2026-01-01T00:00:00.000Z',

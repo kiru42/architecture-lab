@@ -8,11 +8,13 @@ interface TaskState {
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Task) => void;
   updateTask: (id: string, task: Partial<Task>) => void;
-  removeTask: (id: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
 
+/**
+ * No `removeTask`: the contract has no `DELETE /tasks/{id}`.
+ */
 export const useTaskStore = create<TaskState>((set) => ({
   tasks: [],
   isLoading: false,
@@ -24,10 +26,6 @@ export const useTaskStore = create<TaskState>((set) => ({
       tasks: state.tasks.map((t) =>
         t.id === id ? { ...t, ...updatedTask } : t
       ),
-    })),
-  removeTask: (id) =>
-    set((state) => ({
-      tasks: state.tasks.filter((t) => t.id !== id),
     })),
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),

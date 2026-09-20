@@ -22,6 +22,13 @@ export class GetProfileUseCase {
   }
 }
 
+export class GetTokenUseCase {
+  constructor(private authRepo: IAuthRepository) {}
+  execute(): string | null {
+    return this.authRepo.getToken();
+  }
+}
+
 export class SignOutUseCase {
   constructor(private authRepo: IAuthRepository) {}
   execute(): void {

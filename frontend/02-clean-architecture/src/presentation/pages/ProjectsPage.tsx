@@ -10,7 +10,6 @@ import { useAuth } from '../contexts/AuthContext';
 const listProjectsUseCase = container.listProjectsUseCase();
 const createProjectUseCase = container.createProjectUseCase();
 const updateProjectUseCase = container.updateProjectUseCase();
-const deleteProjectUseCase = container.deleteProjectUseCase();
 
 export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -62,17 +61,6 @@ export function ProjectsPage() {
       await loadProjects();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update project');
-    }
-  };
-
-  const handleDeleteProject = async (project: Project) => {
-    if (!confirm(`Delete project "${project.name}"? This cannot be undone.`)) return;
-    if (!token) return;
-    try {
-      await deleteProjectUseCase.execute(project.id, token);
-      await loadProjects();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete project');
     }
   };
 
@@ -138,12 +126,6 @@ export function ProjectsPage() {
                         >
                           Archive
                         </button>
-                        <button
-                          onClick={() => handleDeleteProject(project)}
-                          className="text-sm text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -167,12 +149,6 @@ export function ProjectsPage() {
                           className="text-sm text-blue-600 hover:text-blue-800"
                         >
                           Restore
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProject(project)}
-                          className="text-sm text-red-600 hover:text-red-800"
-                        >
-                          Delete
                         </button>
                       </div>
                     </div>

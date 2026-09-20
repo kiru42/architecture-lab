@@ -33,6 +33,17 @@ Components covered:
 **Frontends:** `01-component-layered`, `02-clean-architecture`,
 `03-feature-sliced-design`, `04-atomic-design`
 
+### `e2e` — the frontend gate
+
+Matrix over the four frontends, gated on `build-and-test`. Boots Postgres, one
+backend and one Vite server per frontend, then runs the shared Playwright suite
+from `shared/e2e` in Chromium. The report is uploaded as an artifact when it
+fails.
+
+The backend is pinned to `01-layered-ntier`: it is the only implementation with
+a WebSocket gateway, and one scenario asserts that a live `task.assigned` event
+reaches the assignee's browser.
+
 ### `acceptance` — the real gate
 
 One job per backend, against a `postgres:16-alpine` service container. Each job
