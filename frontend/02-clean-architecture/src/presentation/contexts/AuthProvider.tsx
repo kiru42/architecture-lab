@@ -1,18 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { User } from '@domain/entities';
 import { container } from '@infrastructure/di/container';
 import { TOKEN_KEY } from '@infrastructure/storage/tokenStorage';
-
-interface AuthContextValue {
-  user: User | null;
-  token: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, name: string, password: string) => Promise<void>;
-  signOut: () => void;
-  isLoading: boolean;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext, AuthContextValue } from './auth-context';
 
 // The container hands out a fresh instance on every call. Hoisting them here
 // keeps the references stable between renders, which is what the effect below
@@ -66,17 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, token, signIn, signUp, signOut, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const value: AuthContextValue = { user, token, signIn, signUp, signOut, isLoading };
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

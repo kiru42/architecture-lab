@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Task } from '@domain/entities';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useComments } from '../hooks/useComments';
 
 interface TaskDetailProps {

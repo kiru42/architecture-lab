@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Project, Task } from '@domain/entities';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context';
 import { useProjects } from '../hooks/useProjects';
 import { useTasks } from '../hooks/useTasks';
 import { Header } from '../components/Header';
