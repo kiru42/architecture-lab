@@ -50,13 +50,30 @@ wait_for_url() {
 }
 
 cleanup() {
+  stop_frontend
+  BACKEND="$BACKEND" docker compose -f "$ROOT/docker-compose.yml" \
+    down -v --remove-orphans > /dev/null 2>&1 || true
+}
+
+# `npx vite` runs as a child of the shell that launched it, so killing that shell
+# leaves Vite holding the port. Kill the whole process group, then make sure the
+# port is actually free before anyone else tries to bind it.
+stop_frontend() {
   if [ -n "$VITE_PID" ]; then
-    kill "$VITE_PID" 2>/dev/null || true
+    kill -- "-$VITE_PID" 2>/dev/null || kill "$VITE_PID" 2>/dev/null || true
     wait "$VITE_PID" 2>/dev/null || true
     VITE_PID=""
   fi
-  BACKEND="$BACKEND" docker compose -f "$ROOT/docker-compose.yml" \
-    down -v --remove-orphans > /dev/null 2>&1 || true
+  pkill -f "vite --port $E2E_PORT" 2>/dev/null || true
+  for _ in $(seq 1 20); do
+    is_port_serving "$E2E_PORT" || return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+is_port_serving() {
+  curl -s -o /dev/null --max-time 1 "http://localhost:$1"
 }
 trap cleanup EXIT
 
@@ -91,9 +108,17 @@ for impl in "${FRONTENDS[@]}"; do
     continue
   fi
 
-  ( cd "$ROOT/frontend/$impl" \
-      && API_PROXY_TARGET="http://localhost:$API_PORT" \
-         npx vite --port "$E2E_PORT" --strictPort ) > "$OUT_DIR/$impl.vite.log" 2>&1 &
+  # If something already answers on this port it is *not* the frontend under
+  # test: testing against it would report on the wrong application, which is how
+  # a frontend with no testids at all can look green.
+  if is_port_serving "$E2E_PORT"; then
+    echo "FAIL  $impl  (port $E2E_PORT already in use — refusing to test a foreign server)"
+    echo "FAIL  $impl" >> "$RESULTS"
+    continue
+  fi
+
+  setsid bash -c "cd '$ROOT/frontend/$impl' && exec env API_PROXY_TARGET='http://localhost:$API_PORT' npx vite --port '$E2E_PORT' --strictPort" \
+    > "$OUT_DIR/$impl.vite.log" 2>&1 &
   VITE_PID=$!
 
   if ! wait_for_url "http://localhost:$E2E_PORT" 45; then
