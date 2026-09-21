@@ -1,14 +1,24 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ProjectItem } from '../features/projects/ui/ProjectItem';
 import { ProjectForm } from '../features/projects/ui/ProjectForm';
 import { Card } from '../shared/ui/Card';
 import { projectApi } from '../entities/project/api';
 import { useProjectStore } from '../entities/project/model/store';
+import { Project } from '../shared/types';
 
-export const ProjectList: React.FC = () => {
+interface ProjectListProps {
+  /** The project whose tasks are shown alongside the list, if any. */
+  selectedProjectId: string | null;
+  onSelect: (project: Project) => void;
+}
+
+/**
+ * The list owns loading and nothing else: which project is selected is the
+ * page's state, so selection survives a re-render and does not send the user to
+ * a different URL to look at the same thing.
+ */
+export const ProjectList: React.FC<ProjectListProps> = ({ selectedProjectId, onSelect }) => {
   const { projects, isLoading, setProjects, setLoading, setError } = useProjectStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -26,8 +36,8 @@ export const ProjectList: React.FC = () => {
     loadProjects();
   }, [setProjects, setLoading, setError]);
 
-  const activeProjects = projects.filter(p => !p.archived);
-  const archivedProjects = projects.filter(p => p.archived);
+  const activeProjects = projects.filter((p) => !p.archived);
+  const archivedProjects = projects.filter((p) => p.archived);
 
   if (isLoading) {
     return <div className="text-center py-8">Loading projects...</div>;
@@ -50,7 +60,8 @@ export const ProjectList: React.FC = () => {
               <ProjectItem
                 key={project.id}
                 project={project}
-                onSelect={() => navigate(`/tasks/${project.id}`)}
+                onSelect={onSelect}
+                selected={selectedProjectId === project.id}
               />
             ))}
           </div>
@@ -65,7 +76,8 @@ export const ProjectList: React.FC = () => {
               <ProjectItem
                 key={project.id}
                 project={project}
-                onSelect={() => navigate(`/tasks/${project.id}`)}
+                onSelect={onSelect}
+                selected={selectedProjectId === project.id}
               />
             ))}
           </div>

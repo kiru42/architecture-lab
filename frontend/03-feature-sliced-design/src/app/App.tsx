@@ -7,7 +7,6 @@ import { useUserStore } from '../entities/user/model/store';
 import SignInPage from '../pages/signin';
 import SignUpPage from '../pages/signup';
 import ProjectsPage from '../pages/projects';
-import TasksPage from '../pages/tasks/[projectId]';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useUserStore();
@@ -74,14 +73,6 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <ProjectsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tasks/:projectId"
-              element={
-                <ProtectedRoute>
-                  <TasksPage />
                 </ProtectedRoute>
               }
             />

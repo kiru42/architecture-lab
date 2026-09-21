@@ -29,12 +29,12 @@ export const Header: React.FC = () => {
               </nav>
             )}
           </div>
-          
+
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <>
                 <span data-testid="header-user" className="text-sm">
-                  Welcome, {user?.name}
+                  {user?.name}
                 </span>
                 <Button variant="secondary" onClick={handleSignOut}>
                   Sign Out
@@ -53,8 +53,10 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Mounted here so the socket lives as long as an authenticated page. */}
-        <NotificationCenter />
+        {/* Only an authenticated session has anything to watch, so the centre
+            is mounted exactly when there is a session — and never on the
+            sign-in screen, where a visitor must hold no socket. */}
+        {isAuthenticated && <NotificationCenter />}
       </div>
     </header>
   );

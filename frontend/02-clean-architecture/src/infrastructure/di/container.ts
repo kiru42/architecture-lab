@@ -3,6 +3,7 @@ import {
   HttpProjectRepository,
   HttpTaskRepository,
   HttpCommentRepository,
+  SocketIoNotificationSocket,
 } from '@infrastructure/repositories';
 
 import {
@@ -21,13 +22,16 @@ import {
   ListCommentsUseCase,
   CreateCommentUseCase,
   DeleteCommentUseCase,
+  WatchTaskAssignmentsUseCase,
 } from '@application/use-cases';
 
-// Singleton repositories
+// Singleton infrastructure adapters. They are stateless, so one instance is
+// shared across every use case rather than rebuilt on each call.
 const authRepository = new HttpAuthRepository();
 const projectRepository = new HttpProjectRepository();
 const taskRepository = new HttpTaskRepository();
 const commentRepository = new HttpCommentRepository();
+const notificationSocket = new SocketIoNotificationSocket();
 
 // DI container factory
 export const container = {
@@ -53,4 +57,7 @@ export const container = {
   listCommentsUseCase: () => new ListCommentsUseCase(commentRepository),
   createCommentUseCase: () => new CreateCommentUseCase(commentRepository),
   deleteCommentUseCase: () => new DeleteCommentUseCase(commentRepository),
+
+  // Notification use case
+  watchTaskAssignmentsUseCase: () => new WatchTaskAssignmentsUseCase(notificationSocket),
 };
