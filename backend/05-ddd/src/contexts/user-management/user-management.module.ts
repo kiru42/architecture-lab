@@ -26,7 +26,7 @@ const QueryHandlers = [GetProfileHandler];
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET') || 'default-secret',
+        secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '7d' },
       }),
     }),

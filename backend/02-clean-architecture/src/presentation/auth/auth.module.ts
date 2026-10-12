@@ -6,12 +6,13 @@ import { RegisterUseCase } from '../../core/application/use-cases/register.use-c
 import { LoginUseCase } from '../../core/application/use-cases/login.use-case';
 import { GetProfileUseCase } from '../../core/application/use-cases/get-profile.use-case';
 import { AuthController } from './auth.controller';
+import { requireJwtSecret } from '../../infrastructure/auth/jwt-secret';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key',
+      secret: requireJwtSecret(),
       signOptions: { expiresIn: '7d' },
     }),
   ],

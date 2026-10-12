@@ -17,7 +17,7 @@ import { IGetProfileUseCase } from '../../domain/ports/primary/get-profile.useca
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'default-secret',
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '7d' },
       }),
     }),
