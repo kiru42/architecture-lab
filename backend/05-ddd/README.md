@@ -1,23 +1,23 @@
-# Backend #5 : Domain-Driven Design (DDD)
+# Backend #5: Domain-Driven Design (DDD)
 
-**Architecture tactique DDD avec Bounded Contexts, Aggregates, Value Objects et Domain Events.**
+**Tactical DDD architecture with Bounded Contexts, Aggregates, Value Objects, and Domain Events.**
 
 ---
 
 ## 📐 Architecture Overview
 
-Cette implémentation suit les **patterns tactiques de DDD** (Evans, 2003) :
+This implementation follows the **DDD tactical patterns** (Evans, 2003):
 
 ```
 src/
-├── shared-kernel/              # Code partagé entre tous les contexts
+├── shared-kernel/              # Code shared across all contexts
 │   └── domain/
-│       ├── aggregate-root.ts   # Base class pour Aggregates
+│       ├── aggregate-root.ts   # Base class for Aggregates
 │       ├── events/
-│       │   └── domain-event.ts # Base pour Domain Events
+│       │   └── domain-event.ts # Base for Domain Events
 │       └── value-objects/
-│           ├── email.vo.ts     # Email VO (partagé)
-│           └── entity-id.vo.ts # Base pour tous les IDs
+│           ├── email.vo.ts     # Email VO (shared)
+│           └── entity-id.vo.ts # Base for all IDs
 │
 ├── contexts/
 │   ├── user-management/        # Bounded Context #1
@@ -66,71 +66,71 @@ src/
 
 ## 🏛️ DDD Concepts Implemented
 
-### 1. **Bounded Contexts** (Contextes Délimités)
-Chaque context a son propre **langage ubiquitaire** et **modèle de domaine isolé** :
-- `UserManagement` : gestion auth + profils utilisateurs
-- `ProjectManagement` : gestion projets + ownership
-- `TaskManagement` : gestion tâches + statuts
+### 1. **Bounded Contexts**
+Each context has its own **ubiquitous language** and **isolated domain model**:
+- `UserManagement`: authentication + user profiles management
+- `ProjectManagement`: project management + ownership
+- `TaskManagement`: task management + statuses
 
-**Isolation forte** : chaque context peut évoluer indépendamment.
+**Strong isolation**: each context can evolve independently.
 
-### 2. **Aggregates** (Racines d'Agrégats)
-Les **Aggregates** garantissent la **cohérence transactionnelle** :
-- `User` : seul point d'entrée pour modifier un utilisateur
-- `Project` : seul point d'entrée pour modifier un projet
-- `Task` : seul point d'entrée pour modifier une tâche
+### 2. **Aggregates** (Aggregate Roots)
+Les **Aggregates** guarantee **transactional consistency**:
+- `User`: single entry point for modifying a user
+- `Project`: single entry point for modifying a project
+- `Task`: single entry point for modifying a task
 
-Toutes les modifications passent par des **méthodes d'aggregate** (pas de setters publics).
+All modifications go through **aggregate methods** (no public setters).
 
-### 3. **Value Objects** (Objets-Valeur)
-**Immutables** + **auto-validés** :
-- `Email` : validation format email
-- `UserId`, `ProjectId`, `TaskId` : type-safe IDs (pas de string brut)
-- `UserName`, `ProjectName` : validation longueur
-- `TaskStatus` : enum typé (TODO/IN_PROGRESS/DONE)
-- `HashedPassword` : validation hash
+### 3. **Value Objects** (Value Objects)
+**Immutable** + **self-validating**:
+- `Email`: email format validation
+- `UserId`, `ProjectId`, `TaskId`: type-safe IDs (no raw strings)
+- `UserName`, `ProjectName`: length validation
+- `TaskStatus`: typed enum (TODO/IN_PROGRESS/DONE)
+- `HashedPassword`: hash validation
 
-**Avantage** : impossible de créer un état invalide.
+**Benefit**: it is impossible to create an invalid state.
 
-### 4. **Domain Events** (Événements de Domaine)
-Les aggregates **émettent des événements** pour notifier les changements importants :
-- `UserRegisteredEvent` : nouveau user créé
-- `ProjectCreatedEvent` : nouveau projet créé
-- `TaskCompletedEvent` : tâche terminée
+### 4. **Domain Events** (Domain Events)
+Aggregates **emit events** to signal important changes:
+- `UserRegisteredEvent`: new user created
+- `ProjectCreatedEvent`: new project created
+- `TaskCompletedEvent`: task completed
 
-Les events sont **publiés via EventBus** après persistance (pattern Outbox simplifié).
+Events are **published via the EventBus** after persistence (simplified Outbox pattern).
 
 ### 5. **Repositories**
-**Interfaces définies dans le Domain**, implémentées dans Infrastructure :
+**Interfaces defined in the Domain**, implemented in Infrastructure:
 - `IUserRepository` → `PrismaUserRepository`
 - `IProjectRepository` → `PrismaProjectRepository`
 - `ITaskRepository` → `PrismaTaskRepository`
 
-Le domain ne connaît **que les interfaces**, pas Prisma.
+The domain only knows **the interfaces**, not Prisma.
 
 ### 6. **CQRS** (Command Query Responsibility Segregation)
-Séparation **Commands** (write) vs **Queries** (read) :
-- **Commands** : `RegisterUser`, `CreateProject`, `CompleteTask` → modifient l'état
-- **Queries** : `GetUser`, `GetProjects`, `GetTasks` → lecture seule
+Separation of **Commands** (write) vs **Queries** (read):
+- **Commands**: `RegisterUser`, `CreateProject`, `CompleteTask` → modify state
+- **Queries**: `GetUser`, `GetProjects`, `GetTasks` → read-only
 
-Implémentés via `@nestjs/cqrs` (CommandBus, QueryBus, EventBus).
+Implemented via `@nestjs/cqrs` (CommandBus, QueryBus, EventBus).
 
 ---
 
 ## 📊 Metrics
 
-| Métrique | Valeur |
+| Metric | Value |
 |----------|--------|
-| **Lignes de code (domain)** | ~800 LOC |
-| **Lignes de code (total)** | ~2,100 LOC |
-| **Fichiers** | 62 fichiers |
+| **Lines of code (domain)** | ~800 LOC |
+| **Lines of code (total)** | ~2,100 LOC |
+| **Files** | 62 files |
 | **Tests** | 10 tests (100% aggregates + VOs) |
 | **Contexts** | 3 Bounded Contexts |
 | **Aggregates** | 3 (User, Project, Task) |
 | **Value Objects** | 8 VOs |
 | **Domain Events** | 3 events |
 | **CQRS Handlers** | 8 (5 Commands, 3 Queries) |
-| **Dépendances** | NestJS + CQRS + EventEmitter |
+| **Dependencies** | NestJS + CQRS + EventEmitter |
 
 ---
 
@@ -162,25 +162,25 @@ npm start
 npm test
 ```
 
-**Coverage** :
-- ✅ User Aggregate : register + reconstitute + events
-- ✅ Project Aggregate : create + update + ownership + events
-- ✅ Task Aggregate : create + complete + events + idempotence
-- ✅ Email VO : validation + equality
+**Coverage**:
+- ✅ User Aggregate: register + reconstitute + events
+- ✅ Project Aggregate: create + update + ownership + events
+- ✅ Task Aggregate: create + complete + events + idempotence
+- ✅ Email VO: validation + equality
 
-**Philosophy** : tester le **comportement métier** (aggregates + VOs), pas l'infra.
+**Philosophy**: test the **business behavior** (aggregates + VOs), not the infrastructure.
 
 ---
 
 ## 🎯 DDD Tactical Patterns Summary
 
-| Pattern | Implémentation |
+| Pattern | Implementation |
 |---------|----------------|
-| **Bounded Context** | 3 contexts isolés (User, Project, Task) |
-| **Aggregate** | User, Project, Task avec invariants + factory methods |
+| **Bounded Context** | 3 isolated contexts (User, Project, Task) |
+| **Aggregate** | User, Project, Task with invariants + factory methods |
 | **Value Object** | Email, EntityId, UserId, ProjectName, TaskStatus (immutable + validated) |
 | **Domain Event** | UserRegistered, ProjectCreated, TaskCompleted (EventBus) |
-| **Repository** | Interfaces dans Domain, implémentations Prisma dans Infrastructure |
+| **Repository** | Interfaces in Domain, Prisma implementations in Infrastructure |
 | **CQRS** | Commands (write) vs Queries (read) via @nestjs/cqrs |
 | **Shared Kernel** | Email VO + EntityId VO + DomainEvent base |
 
@@ -190,82 +190,82 @@ npm test
 
 | Aspect | Layered (#1) | Clean (#2) | Hexagonal (#3) | **DDD (#5)** |
 |--------|--------------|------------|----------------|--------------|
-| **Contexts** | ❌ Tout mélangé | ❌ Pas de contexts | ❌ Pas de contexts | ✅ 3 contexts isolés |
-| **Value Objects** | ❌ Primitive types | ❌ Primitive types | ❌ Primitive types | ✅ 8 VOs typés |
-| **Aggregates** | ❌ Entities anémiques | ❌ Entities anémiques | ❌ Entities anémiques | ✅ Aggregates riches |
-| **Domain Events** | ❌ Aucun | ❌ Aucun | ❌ Aucun | ✅ 3 events |
-| **CQRS** | ❌ Couplé read/write | ❌ Couplé read/write | ❌ Couplé read/write | ✅ Séparé Commands/Queries |
-| **Type Safety IDs** | ❌ `string` partout | ❌ `string` partout | ❌ `string` partout | ✅ UserId, ProjectId, TaskId |
-| **Validation** | ⚠️ Dans controllers | ⚠️ Dans use cases | ⚠️ Dans use cases | ✅ Dans Value Objects |
+| **Contexts** | ❌ Everything mixed together | ❌ No contexts | ❌ No contexts | ✅ 3 isolated contexts |
+| **Value Objects** | ❌ Primitive types | ❌ Primitive types | ❌ Primitive types | ✅ 8 typed VOs |
+| **Aggregates** | ❌ Anemic entities | ❌ Anemic entities | ❌ Anemic entities | ✅ Rich aggregates |
+| **Domain Events** | ❌ None | ❌ None | ❌ None | ✅ 3 events |
+| **CQRS** | ❌ Read/write coupled | ❌ Read/write coupled | ❌ Read/write coupled | ✅ Commands/Queries separated |
+| **Type Safety IDs** | ❌ `string` everywhere | ❌ `string` everywhere | ❌ `string` everywhere | ✅ UserId, ProjectId, TaskId |
+| **Validation** | ⚠️ In controllers | ⚠️ In use cases | ⚠️ In use cases | ✅ In Value Objects |
 | **LOC/feature** | ~100 | ~167 | ~167 | **~250** |
-| **Complexité** | Faible | Moyenne | Moyenne | **Élevée** |
-| **Scalabilité** | ⚠️ Monolithe fragile | ✅ Bonne | ✅ Bonne | ✅ **Excellente** (contexts isolés) |
+| **Complexity** | Low | Medium | Medium | **High** |
+| **Scalability** | ⚠️ Fragile monolith | ✅ Good | ✅ Good | ✅ **Excellent** (isolated contexts) |
 
 ---
 
 ## ✅ Pros
 
-1. **Isolation forte** : chaque Bounded Context peut évoluer indépendamment
-2. **Type Safety** : impossible de passer un `ProjectId` à la place d'un `UserId`
-3. **Validation automatique** : les VOs rejettent les données invalides à la construction
-4. **Événements métier** : traçabilité + découplage (ex: envoyer un email quand `UserRegisteredEvent`)
-5. **Testabilité** : domain layer 100% pur (pas de dépendances externes)
-6. **Langage ubiquitaire** : le code reflète le vocabulaire métier
-7. **Évolutivité** : facile d'extraire un context en microservice plus tard
-8. **CQRS** : optimisation read/write indépendante (ex: read DB séparée)
+1. **Strong isolation**: each Bounded Context can evolve independently
+2. **Type Safety**: it is impossible to pass a `ProjectId` where a `UserId` is expected
+3. **Automatic validation**: VOs reject invalid data at construction
+4. **Domain events**: traceability + decoupling (e.g. send an email on `UserRegisteredEvent`)
+5. **Testability**: 100% pure domain layer (no external dependencies)
+6. **Ubiquitous language**: the code reflects the business vocabulary
+7. **Evolvability**: easy to extract a context into a microservice later
+8. **CQRS**: independent read/write optimization (e.g. separate read DB)
 
 ---
 
 ## ❌ Cons
 
-1. **Verbosité** : ~250 LOC par feature (vs ~100 en Layered)
-2. **Over-engineering** : trop complexe pour une app CRUD simple
-3. **Courbe d'apprentissage** : requiert une vraie compréhension de DDD
-4. **Setup lent** : 3-4h pour la 1ère feature (vs 1.5h en Layered)
-5. **Dépendances** : `@nestjs/cqrs` + `@nestjs/event-emitter` (frameworks spécifiques)
-6. **Mapping overhead** : DTO → Command → Aggregate → Repository (4 couches)
-7. **Pas adapté aux équipes juniors** : risque de DDD cargo-cult
-8. **Synchronisation contexts** : complexité si User context doit connaître Project context
+1. **Verbosity**: ~250 LOC per feature (vs ~100 in Layered)
+2. **Over-engineering**: too complex for a simple CRUD app
+3. **Learning curve**: requires a real understanding of DDD
+4. **Slow setup**: 3-4h for the 1st feature (vs 1.5h in Layered)
+5. **Dependencies**: `@nestjs/cqrs` + `@nestjs/event-emitter` (framework-specific)
+6. **Mapping overhead**: DTO → Command → Aggregate → Repository (4 layers)
+7. **Not suited to junior teams**: risk of DDD cargo-culting
+8. **Context synchronization**: complexity if the User context needs to know about the Project context
 
 ---
 
 ## 📖 When to Use DDD
 
-### ✅ **USE DDD** si :
-- Domaine métier **complexe** (pas un simple CRUD)
-- Besoin de **scalabilité** (futurs microservices)
-- Équipe **expérimentée** en DDD
-- Événements métier importants (audit, notifications, workflows)
-- Application **long-terme** (5+ ans)
+### ✅ **USE DDD** if:
+- **Complex** business domain (not simple CRUD)
+- Need for **scalability** (future microservices)
+- Team **experienced** in DDD
+- Important domain events (audit, notifications, workflows)
+- **Long-term** application (5+ years)
 
-### ❌ **AVOID DDD** si :
-- CRUD simple (admin panel, backoffice)
-- Équipe junior ou petite équipe
-- Time-to-market critique (prototype, MVP)
-- Domaine trivial (pas de règles métier complexes)
+### ❌ **AVOID DDD** if:
+- Simple CRUD (admin panel, back office)
+- Junior or small team
+- Critical time-to-market (prototype, MVP)
+- Trivial domain (no complex business rules)
 
 ---
 
 ## 📚 DDD References
 
-- **Eric Evans** : "Domain-Driven Design" (2003) — le livre fondateur
-- **Vaughn Vernon** : "Implementing Domain-Driven Design" (2013) — guide pratique
-- **Martin Fowler** : [BoundedContext](https://martinfowler.com/bliki/BoundedContext.html)
-- **NestJS CQRS** : [docs.nestjs.com/recipes/cqrs](https://docs.nestjs.com/recipes/cqrs)
+- **Eric Evans**: "Domain-Driven Design" (2003) — the foundational book
+- **Vaughn Vernon**: "Implementing Domain-Driven Design" (2013) — practical guide
+- **Martin Fowler**: [BoundedContext](https://martinfowler.com/bliki/BoundedContext.html)
+- **NestJS CQRS**: [docs.nestjs.com/recipes/cqrs](https://docs.nestjs.com/recipes/cqrs)
 
 ---
 
 ## 🎓 Key Learnings
 
-1. **DDD ≠ Architecture** : DDD est une approche de modélisation du domaine, pas une archi technique
-2. **Bounded Contexts > Layers** : l'isolation par context est plus forte que par couches
-3. **Value Objects = Defensive Coding** : impossible de créer un état invalide
-4. **Aggregates = Consistency Boundaries** : chaque aggregate garantit ses propres invariants
-5. **Events = Decoupling** : les events découplent les contexts (ex: Task context écoute ProjectCreated)
-6. **CQRS = Flexibility** : séparer read/write permet d'optimiser chacun indépendamment
+1. **DDD ≠ Architecture**: DDD is a domain modeling approach, not a technical architecture
+2. **Bounded Contexts > Layers**: isolation by context is stronger than isolation by layers
+3. **Value Objects = Defensive Coding**: it is impossible to create an invalid state
+4. **Aggregates = Consistency Boundaries**: each aggregate guarantees its own invariants
+5. **Events = Decoupling**: events decouple contexts (e.g. the Task context listens to ProjectCreated)
+6. **CQRS = Flexibility**: separating read/write allows optimizing each independently
 
 ---
 
-**Next Steps** :
-- Backend #6 (CQRS + Event Sourcing) : pousser CQRS à fond + event store
-- Backend #7 (Modular Monolith) : modules découplés dans un même process
+**Next Steps**:
+- Backend #6 (CQRS + Event Sourcing): push CQRS all the way + event store
+- Backend #7 (Modular Monolith): decoupled modules within a single process

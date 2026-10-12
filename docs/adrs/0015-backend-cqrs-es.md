@@ -278,7 +278,7 @@ class EventReplayer implements OnModuleInit {
 
 ## Metrics
 
-| Métrique | Layered (#1) | DDD (#5) | **CQRS + ES (#6)** |
+| Metric | Layered (#1) | DDD (#5) | **CQRS + ES (#6)** |
 |----------|--------------|----------|--------------------|
 | **Total LOC** | 900 | 2,100 | **1,100** |
 | **Write LOC** | — | — | **350** |

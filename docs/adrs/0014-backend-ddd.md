@@ -9,29 +9,29 @@
 
 ## Context
 
-Après avoir implémenté **3 architectures "propres"** (Clean, Hexagonal, Onion), nous avons découvert qu'elles sont **structurellement identiques** (ADR-0013).
+After implementing **3 "clean" architectures** (Clean, Hexagonal, Onion), we found that they are **structurally identical** (ADR-0013).
 
-**Question** : comment gérer la **complexité métier** au-delà de la simple séparation par couches ?
+**Question**: how do we manage **business complexity** beyond simple layer separation?
 
-**Domain-Driven Design** (Evans, 2003) propose une approche différente :
-- Focus sur le **modèle de domaine** (pas sur les couches techniques)
-- **Bounded Contexts** pour isoler les sous-domaines
-- **Tactical Patterns** : Aggregates, Value Objects, Domain Events
-- **Strategic Patterns** : Context Mapping, Anti-Corruption Layer
+**Domain-Driven Design** (Evans, 2003) proposes a different approach:
+- Focus on the **domain model** (not on technical layers)
+- **Bounded Contexts** to isolate subdomains
+- **Tactical Patterns**: Aggregates, Value Objects, Domain Events
+- **Strategic Patterns**: Context Mapping, Anti-Corruption Layer
 
 ---
 
 ## Decision
 
-Implémenter une architecture **DDD tactique** avec :
+Implement a **tactical DDD** architecture with:
 
-1. **3 Bounded Contexts** : `UserManagement`, `ProjectManagement`, `TaskManagement`
-2. **Shared Kernel** : Value Objects communs (`Email`, `EntityId`)
-3. **Aggregates** : `User`, `Project`, `Task` (racines d'agrégats)
-4. **Value Objects** : `UserId`, `ProjectId`, `TaskId`, `TaskStatus`, `ProjectName`, etc.
-5. **Domain Events** : `UserRegisteredEvent`, `ProjectCreatedEvent`, `TaskCompletedEvent`
-6. **CQRS** : Commands (write) + Queries (read) via `@nestjs/cqrs`
-7. **Event-Driven** : publication d'events via `EventBus` après persistance
+1. **3 Bounded Contexts**: `UserManagement`, `ProjectManagement`, `TaskManagement`
+2. **Shared Kernel**: shared Value Objects (`Email`, `EntityId`)
+3. **Aggregates**: `User`, `Project`, `Task` (aggregate roots)
+4. **Value Objects**: `UserId`, `ProjectId`, `TaskId`, `TaskStatus`, `ProjectName`, etc.
+5. **Domain Events**: `UserRegisteredEvent`, `ProjectCreatedEvent`, `TaskCompletedEvent`
+6. **CQRS**: Commands (write) + Queries (read) via `@nestjs/cqrs`
+7. **Event-Driven**: events published via `EventBus` after persistence
 
 ---
 
@@ -41,7 +41,7 @@ Implémenter une architecture **DDD tactique** avec :
 
 ```
 src/
-├── shared-kernel/              # Code partagé entre tous les contexts
+├── shared-kernel/              # Code shared across all contexts
 │   └── domain/
 │       ├── aggregate-root.ts
 │       ├── events/domain-event.ts
@@ -70,19 +70,19 @@ src/
 
 ### DDD Tactical Patterns
 
-| Pattern | Implémentation |
+| Pattern | Implementation |
 |---------|----------------|
-| **Aggregate** | `User`, `Project`, `Task` — cohérence transactionnelle + factory methods |
-| **Value Object** | `Email`, `UserId`, `TaskStatus` — immutable + auto-validé |
-| **Domain Event** | `UserRegisteredEvent`, `TaskCompletedEvent` — publié via EventBus |
-| **Repository** | Interfaces dans Domain (`IUserRepository`), implémentation Prisma dans Infra |
-| **CQRS** | Commands (write) vs Queries (read) — handlers séparés |
-| **Shared Kernel** | VOs communs (`Email`, `EntityId`) + bases (`AggregateRoot`, `DomainEvent`) |
+| **Aggregate** | `User`, `Project`, `Task` — transactional consistency + factory methods |
+| **Value Object** | `Email`, `UserId`, `TaskStatus` — immutable + self-validating |
+| **Domain Event** | `UserRegisteredEvent`, `TaskCompletedEvent` — published via EventBus |
+| **Repository** | Interfaces in Domain (`IUserRepository`), Prisma implementation in Infra |
+| **CQRS** | Commands (write) vs Queries (read) — separate handlers |
+| **Shared Kernel** | Shared VOs (`Email`, `EntityId`) + base classes (`AggregateRoot`, `DomainEvent`) |
 
 ### Example Flow (Register User)
 
 ```typescript
-// 1. HTTP Controller reçoit RegisterDto
+// 1. HTTP Controller receives RegisterDto
 @Post('register')
 async register(@Body() dto: RegisterDto) {
   const userId = await this.commandBus.execute(
@@ -129,7 +129,7 @@ async save(user: User): Promise<void> {
 }
 ```
 
-**Flux** :
+**Flow**:
 1. DTO → Command
 2. Command → Aggregate (domain logic)
 3. Aggregate → Repository (persistence)
@@ -139,18 +139,18 @@ async save(user: User): Promise<void> {
 
 ## Implementation Metrics
 
-| Métrique | Valeur | Comparaison (#1 Layered) |
+| Metric | Value | Comparison (#1 Layered) |
 |----------|--------|--------------------------|
 | **Total LOC** | ~2,100 | +130% |
-| **Domain LOC** | ~800 | N/A (pas de domain pur en Layered) |
-| **Fichiers** | 62 | +110% (vs 29) |
-| **Tests** | 10 (aggregates + VOs) | -64% (vs 28, mais focus domain) |
+| **Domain LOC** | ~800 | N/A (no pure domain in Layered) |
+| **Files** | 62 | +110% (vs 29) |
+| **Tests** | 10 (aggregates + VOs) | -64% (vs 28, but domain-focused) |
 | **LOC/feature** | ~250 | +150% (vs 100) |
-| **Temps 1ère feature** | ~3.5h | +133% (vs 1.5h) |
-| **Bounded Contexts** | 3 | 0 (Layered = monolithe unifié) |
+| **Time to first feature** | ~3.5h | +133% (vs 1.5h) |
+| **Bounded Contexts** | 3 | 0 (Layered = unified monolith) |
 | **Value Objects** | 8 | 0 (primitive types) |
 | **Domain Events** | 3 | 0 |
-| **CQRS Handlers** | 8 (5 Commands, 3 Queries) | 0 (services mixtes) |
+| **CQRS Handlers** | 8 (5 Commands, 3 Queries) | 0 (mixed services) |
 
 ---
 
@@ -158,34 +158,34 @@ async save(user: User): Promise<void> {
 
 ### ✅ Advantages
 
-#### 1. **Isolation par Bounded Context**
-- Chaque context a son **propre modèle** + **langage ubiquitaire**
-- **Évolution indépendante** : modifier User context sans toucher Task context
-- **Futurs microservices** : facile d'extraire un context en service séparé
+#### 1. **Isolation per Bounded Context**
+- Each context has its **own model** + **ubiquitous language**
+- **Independent evolution**: modify the User context without touching the Task context
+- **Future microservices**: easy to extract a context into a separate service
 
 #### 2. **Type Safety via Value Objects**
 ```typescript
-// ❌ Avant (primitive types)
+// ❌ Before (primitive types)
 function assignTask(userId: string, taskId: string) { ... }
-assignTask(taskId, userId); // BUG : params inversés, compile OK !!!
+assignTask(taskId, userId); // BUG: swapped params, compiles fine !!!
 
-// ✅ Après (Value Objects)
+// ✅ After (Value Objects)
 function assignTask(userId: UserId, taskId: TaskId) { ... }
 assignTask(taskId, userId); // ❌ TypeScript error : incompatible types
 ```
 
-#### 3. **Validation Automatique**
+#### 3. **Automatic Validation**
 ```typescript
-// ❌ Avant
-const email = dto.email; // peut être invalide !
+// ❌ Before
+const email = dto.email; // may be invalid!
 
-// ✅ Après
-const email = Email.create(dto.email); // throw si invalide
+// ✅ After
+const email = Email.create(dto.email); // throws if invalid
 ```
 
-#### 4. **Domain Events = Découplage**
+#### 4. **Domain Events = Decoupling**
 ```typescript
-// Exemple : envoyer un email de bienvenue quand UserRegisteredEvent
+// Example: send a welcome email on UserRegisteredEvent
 @EventsHandler(UserRegisteredEvent)
 export class SendWelcomeEmailHandler {
   async handle(event: UserRegisteredEvent) {
@@ -193,11 +193,11 @@ export class SendWelcomeEmailHandler {
   }
 }
 ```
-**Avantage** : `UserManagement` context ne connaît pas `EmailService` → couplage faible.
+**Advantage**: the `UserManagement` context does not know about `EmailService` → loose coupling.
 
-#### 5. **Testabilité Domain Pure**
+#### 5. **Pure Domain Testability**
 ```typescript
-// Tests sans mocks, sans DB, sans frameworks
+// Tests without mocks, without a DB, without frameworks
 it('should complete task and emit event', () => {
   const task = Task.create(...);
   task.complete();
@@ -206,38 +206,38 @@ it('should complete task and emit event', () => {
 });
 ```
 
-#### 6. **CQRS = Optimisation Read/Write**
-- Commands : écrivent dans Postgres (ACID)
-- Queries : peuvent lire depuis Redis/ElasticSearch (optimisé search)
-- **Flexibilité** : chaque side peut évoluer indépendamment
+#### 6. **CQRS = Read/Write Optimization**
+- Commands: write to Postgres (ACID)
+- Queries: can read from Redis/ElasticSearch (search-optimized)
+- **Flexibility**: each side can evolve independently
 
-#### 7. **Langage Métier**
+#### 7. **Business Language**
 ```typescript
-// ❌ Avant (tech-centric)
+// ❌ Before (tech-centric)
 userService.update({ status: 'active' });
 
-// ✅ Après (business-centric)
-user.activate(); // méthode métier explicite
+// ✅ After (business-centric)
+user.activate(); // explicit business method
 ```
 
 ### ❌ Disadvantages
 
-#### 1. **Over-Engineering pour CRUD simple**
-- **250 LOC par feature** (vs 100 en Layered)
-- Mapping layers : `DTO → Command → Aggregate → DB Model`
-- **ROI négatif** si domaine trivial
+#### 1. **Over-Engineering for simple CRUD**
+- **250 LOC per feature** (vs 100 in Layered)
+- Mapping layers: `DTO → Command → Aggregate → DB Model`
+- **Negative ROI** if the domain is trivial
 
-#### 2. **Courbe d'Apprentissage**
-- Requiert compréhension DDD (livre Evans = 560 pages)
-- Risque de **DDD Cargo Cult** : appliquer les patterns sans comprendre le "pourquoi"
-- Équipe junior → confusion
+#### 2. **Learning Curve**
+- Requires understanding DDD (Evans' book = 560 pages)
+- Risque de **DDD Cargo Cult**: applying the patterns without understanding the "why"
+- Junior team → confusion
 
-#### 3. **Verbosité**
+#### 3. **Verbosity**
 ```typescript
 // ❌ Simple case (Layered)
 const user = await prisma.user.create({ data: dto });
 
-// ✅ DDD (7+ étapes)
+// ✅ DDD (7+ steps)
 const email = Email.create(dto.email);
 const userId = UserId.generate();
 const hashedPwd = HashedPassword.fromHash(...);
@@ -247,24 +247,24 @@ await repository.save(user);
 eventBus.publish(...);
 ```
 
-#### 4. **Dépendances Framework-Specific**
-- `@nestjs/cqrs` : lock-in NestJS
-- `@nestjs/event-emitter` : pas portable vers Express/Fastify sans refactor
+#### 4. **Framework-Specific Dependencies**
+- `@nestjs/cqrs`: lock-in NestJS
+- `@nestjs/event-emitter`: not portable to Express/Fastify without refactoring
 
-#### 5. **Complexité Synchronisation Contexts**
-**Problème** : si `TaskManagement` a besoin de savoir si un `Project` existe ?
+#### 5. **Context Synchronization Complexity**
+**Problem**: what if `TaskManagement` needs to know whether a `Project` exists?
 
-**Solutions** :
-1. **Anti-Corruption Layer** : `TaskManagement` interroge `ProjectManagement` via API
-2. **Shared Events** : `TaskManagement` écoute `ProjectCreatedEvent`
-3. **Duplication** : `TaskManagement` garde une copie `{ projectId, projectName }`
+**Solutions**:
+1. **Anti-Corruption Layer**: `TaskManagement` queries `ProjectManagement` via API
+2. **Shared Events**: `TaskManagement` listens to `ProjectCreatedEvent`
+3. **Duplication**: `TaskManagement` keeps a copy of `{ projectId, projectName }`
 
-**Trade-off** : complexité accrue.
+**Trade-off**: increased complexity.
 
 #### 6. **Performance Overhead**
-- Création de nombreux objets (VOs, Events, Commands)
-- Garbage Collection plus sollicitée
-- Profiling réel nécessaire (hypothèse : ~5-10% overhead vs Layered)
+- Creation of many objects (VOs, Events, Commands)
+- Heavier Garbage Collection load
+- Real profiling needed (hypothesis: ~5-10% overhead vs Layered)
 
 ---
 
@@ -272,18 +272,18 @@ eventBus.publish(...);
 
 | Aspect | Clean/Hexagonal/Onion | **DDD** |
 |--------|----------------------|---------|
-| **Focus** | Séparation par **couches techniques** | Séparation par **domaines métier** |
+| **Focus** | Separation by **technical layers** | Separation by **business domains** |
 | **Isolation** | Layers (UI, Domain, Infra) | **Bounded Contexts** (User, Project, Task) |
-| **Entities** | Entities anémiques (data bags) | **Aggregates riches** (behavior + invariants) |
+| **Entities** | Anemic Entities (data bags) | **Rich Aggregates** (behavior + invariants) |
 | **IDs** | `string` primitives | **Value Objects** (`UserId`, `ProjectId`) |
-| **Validation** | Dans Use Cases | **Dans Value Objects** (impossible de créer état invalide) |
-| **Events** | ❌ Absents | ✅ **Domain Events** (découplage via pub/sub) |
-| **CQRS** | ❌ Pas de séparation | ✅ **Commands vs Queries** |
-| **Scalabilité** | Bonne (couches) | **Excellente** (contexts isolés → microservices) |
-| **Complexité** | Moyenne | **Élevée** |
-| **Use Case** | Apps moyennes (10-50 features) | **Domaines complexes** (50+ features, multiples sous-domaines) |
+| **Validation** | In Use Cases | **In Value Objects** (impossible to create an invalid state) |
+| **Events** | ❌ Absents | ✅ **Domain Events** (decoupling via pub/sub) |
+| **CQRS** | ❌ No separation | ✅ **Commands vs Queries** |
+| **Scalability** | Good (layers) | **Excellent** (isolated contexts → microservices) |
+| **Complexity** | Medium | **High** |
+| **Use Case** | Mid-size apps (10-50 features) | **Complex domains** (50+ features, multiple subdomains) |
 
-**Conclusion** : DDD **complète** Clean/Hexagonal/Onion, ne les remplace pas.
+**Conclusion**: DDD **complements** Clean/Hexagonal/Onion; it does not replace them.
 
 ---
 
@@ -291,137 +291,137 @@ eventBus.publish(...);
 
 ### ✅ **USE DDD** (Strategic + Tactical Patterns)
 
-1. **Domaine métier complexe**
-   - Multiples règles business interdépendantes
-   - Workflows complexes (ex: e-commerce, assurance, banque)
-   - Expertise métier nécessaire
+1. **Complex business domain**
+   - Multiple interdependent business rules
+   - Complex workflows (e.g. e-commerce, insurance, banking)
+   - Domain expertise required
 
-2. **Application long-terme**
-   - Durée de vie 5+ ans
-   - Évolution continue (ajout features régulier)
+2. **Long-lived application**
+   - 5+ year lifespan
+   - Continuous evolution (regular feature additions)
 
-3. **Scalabilité organisationnelle**
-   - Multiples équipes (1 équipe = 1 context)
-   - Futurs microservices envisagés
+3. **Organizational scalability**
+   - Multiple teams (1 team = 1 context)
+   - Future microservices envisaged
 
-4. **Équipe expérimentée**
-   - Devs seniors connaissant DDD
-   - Temps pour apprentissage si équipe junior
+4. **Experienced team**
+   - Senior devs who know DDD
+   - Time for learning if the team is junior
 
 ### ⚠️ **USE DDD (Strategic) + Clean/Hexagonal (Tactical)**
 
-Si domaine **moyennement complexe** :
+If the domain is **moderately complex**:
 - Bounded Contexts (DDD strategic)
-- Mais **pas de VOs/Aggregates** (trop verbeux)
-- Garder Clean Architecture dans chaque context
+- But **no VOs/Aggregates** (too verbose)
+- Keep Clean Architecture inside each context
 
 ### ❌ **AVOID DDD** (Use Layered/Clean)
 
 1. **CRUD simple**
    - Admin panel, backoffice
-   - Formulaires → DB (pas de logique métier)
+   - Forms → DB (no business logic)
 
 2. **MVP / Prototype**
    - Time-to-market critique
-   - Besoin de vélocité (DDD = 2x slower au début)
+   - Need for velocity (DDD = 2x slower at the start)
 
-3. **Équipe junior sans formation**
-   - Risque de DDD mal appliqué (pire que pas de DDD)
+3. **Junior team without training**
+   - Risk of misapplied DDD (worse than no DDD)
 
-4. **Domaine trivial**
-   - Pas de règles métier complexes
-   - Logique = validation basique
+4. **Trivial domain**
+   - No complex business rules
+   - Logic = basic validation
 
 ---
 
 ## Lessons Learned
 
-### 1. **DDD ≠ Architecture Technique**
-- DDD est une **approche de modélisation du domaine**
-- Peut être combiné avec Clean/Hexagonal/Onion
-- Ne remplace pas les bonnes pratiques techniques (SOLID, testing, etc.)
+### 1. **DDD ≠ Technical Architecture**
+- DDD is a **domain modeling approach**
+- Can be combined with Clean/Hexagonal/Onion
+- Does not replace good technical practices (SOLID, testing, etc.)
 
 ### 2. **Bounded Contexts > Layers**
-- **Layers** = isolation technique (UI, Domain, DB)
-- **Contexts** = isolation **métier** (User, Project, Task)
-- Contexts permettent l'**évolution indépendante** (team scalability)
+- **Layers** = technical isolation (UI, Domain, DB)
+- **Contexts** = **business** isolation (User, Project, Task)
+- Contexts enable **independent evolution** (team scalability)
 
 ### 3. **Value Objects = Defensive Coding++**
 ```typescript
-// ❌ Sans VOs
+// ❌ Without VOs
 function transfer(fromId: string, toId: string, amount: number) {
-  if (amount < 0) throw ... // validation répétée partout
+  if (amount < 0) throw ... // validation repeated everywhere
   if (!fromId) throw ...
   // ...
 }
 
-// ✅ Avec VOs
+// ✅ With VOs
 function transfer(from: AccountId, to: AccountId, amount: Money) {
-  // Impossible d'appeler avec des valeurs invalides !
-  // Validation centralisée dans VOs
+  // Impossible to call with invalid values!
+  // Validation centralized in VOs
 }
 ```
 
 ### 4. **Aggregates = Consistency Boundaries**
 - 1 Aggregate = 1 transaction
-- **Anti-pattern** : charger plusieurs aggregates dans 1 transaction
-- **Correct** : événements + eventual consistency
+- **Anti-pattern**: loading several aggregates in 1 transaction
+- **Correct**: events + eventual consistency
 
 ### 5. **Events = Decoupling Superpowers**
 ```typescript
-// ❌ Couplage fort
+// ❌ Tight coupling
 class UserService {
   async register(dto) {
     await this.db.save(user);
-    await this.emailService.send(...); // couplage !
-    await this.analyticsService.track(...); // couplage !
+    await this.emailService.send(...); // coupling!
+    await this.analyticsService.track(...); // coupling!
   }
 }
 
-// ✅ Découplage via events
+// ✅ Decoupling via events
 class UserService {
   async register(dto) {
     const user = User.register(...);
     await this.repo.save(user);
     this.eventBus.publish(new UserRegisteredEvent(...));
-    // EmailService + Analytics écoutent l'event → 0 couplage
+    // EmailService + Analytics listen to the event → 0 coupling
   }
 }
 ```
 
 ### 6. **CQRS ≠ Event Sourcing**
-- **CQRS** : séparer Commands (write) et Queries (read)
-- **Event Sourcing** : stocker les events au lieu de l'état
-- **DDD #5** : CQRS **sans** Event Sourcing (queries lisent la DB normale)
-- **Backend #6** : CQRS **avec** Event Sourcing (queries reconstruisent depuis events)
+- **CQRS**: separate Commands (write) and Queries (read)
+- **Event Sourcing**: store events instead of state
+- **DDD #5**: CQRS **without** Event Sourcing (queries read the regular DB)
+- **Backend #6**: CQRS **with** Event Sourcing (queries rebuild from events)
 
 ---
 
 ## Next Steps
 
-### Backend #6 : CQRS + Event Sourcing
+### Backend #6: CQRS + Event Sourcing
 - Event Store (events = source of truth)
 - Read Models (projections depuis events)
-- Temporal queries ("état du système au 01/01/2025")
+- Temporal queries ("system state as of 01/01/2025")
 
-### Backend #7 : Modular Monolith
+### Backend #7: Modular Monolith
 - Bounded Contexts (comme DDD)
-- Mais **modules découplés** dans 1 seul process
-- Pas de microservices (éviter distributed monolith)
+- But **decoupled modules** within a single process
+- No microservices (avoid a distributed monolith)
 
 ---
 
 ## References
 
 ### Books
-- **Eric Evans** — "Domain-Driven Design" (2003) : le livre fondateur (560 pages)
-- **Vaughn Vernon** — "Implementing Domain-Driven Design" (2013) : guide pratique
-- **Vaughn Vernon** — "Domain-Driven Design Distilled" (2016) : version concise (176 pages)
+- **Eric Evans** — "Domain-Driven Design" (2003): the foundational book (560 pages)
+- **Vaughn Vernon** — "Implementing Domain-Driven Design" (2013): practical guide
+- **Vaughn Vernon** — "Domain-Driven Design Distilled" (2016): concise version (176 pages)
 
 ### Articles
-- **Martin Fowler** : [BoundedContext](https://martinfowler.com/bliki/BoundedContext.html)
-- **Martin Fowler** : [AggregateRoot](https://martinfowler.com/bliki/DDD_Aggregate.html)
-- **Khalil Stemmler** : [Domain-Driven Design w/ TypeScript](https://khalilstemmler.com/articles/categories/domain-driven-design/)
+- **Martin Fowler**: [BoundedContext](https://martinfowler.com/bliki/BoundedContext.html)
+- **Martin Fowler**: [AggregateRoot](https://martinfowler.com/bliki/DDD_Aggregate.html)
+- **Khalil Stemmler**: [Domain-Driven Design w/ TypeScript](https://khalilstemmler.com/articles/categories/domain-driven-design/)
 
 ### NestJS
 - [NestJS CQRS](https://docs.nestjs.com/recipes/cqrs)
@@ -432,7 +432,7 @@ class UserService {
 ## Verdict
 
 ### ✅ **DDD is Worth It** IF:
-- Domaine complexe (e-commerce, fintech, healthcare)
+- Complex domain (e-commerce, fintech, healthcare)
 - Long-term project (5+ years)
 - Experienced team (or time to learn)
 - Multiple teams (1 context = 1 team)

@@ -1,43 +1,43 @@
-# Backend #7 : Modular Monolith
+# Backend #7: Modular Monolith
 
-**Modules métier fortement cloisonnés dans un seul déployable. Les frontières du microservice, sans la complexité opérationnelle du distribué.**
+**Strictly isolated business modules in a single deployable unit. Microservice-grade boundaries, without the operational complexity of a distributed system.**
 
 ---
 
 ## 📐 Architecture Overview
 
-Chaque **capacité métier** est isolée dans un module autonome (contrôleur + service + repository + DTO). Un **shared kernel** global porte les préoccupations transverses (Prisma, guards, decorators).
+Each **business capability** is isolated in a self-contained module (controller + service + repository + DTO). A global **shared kernel** carries the cross-cutting concerns (Prisma, guards, decorators).
 
 ```
 src/
 ├── modules/
-│   ├── auth/                    # Authentification (signup / signin / me)
+│   ├── auth/                    # Authentication (signup / signin / me)
 │   │   ├── auth.module.ts       # imports: [PassportModule, JwtModule, UsersModule]
 │   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts      # bcrypt + émission JWT
+│   │   ├── auth.service.ts      # bcrypt + JWT issuance
 │   │   ├── jwt.strategy.ts
 │   │   └── dto/                 # SignUpDto, SignInDto
 │   │
-│   ├── users/                   # Gestion utilisateurs — module INTERNE
-│   │   ├── users.module.ts      # exports: [UsersService]  (aucun controller)
+│   ├── users/                   # User management — INTERNAL module
+│   │   ├── users.module.ts      # exports: [UsersService]  (no controller)
 │   │   ├── users.service.ts
 │   │   └── users.repository.ts
 │   │
-│   ├── projects/                # CRUD projets + ownership
+│   ├── projects/                # Project CRUD + ownership
 │   │   ├── projects.module.ts
 │   │   ├── projects.controller.ts
-│   │   ├── projects.service.ts  # invariant: owner uniquement
+│   │   ├── projects.service.ts  # invariant: owner only
 │   │   ├── projects.repository.ts
 │   │   └── dto/
 │   │
-│   ├── tasks/                   # Gestion tâches + complétion
+│   ├── tasks/                   # Task management + completion
 │   │   ├── tasks.module.ts
 │   │   ├── tasks.controller.ts
 │   │   ├── tasks.service.ts
 │   │   ├── tasks.repository.ts
 │   │   └── dto/
 │   │
-│   └── comments/                # Commentaires de tâches
+│   └── comments/                # Task comments
 │       ├── comments.module.ts
 │       ├── comments.controller.ts
 │       ├── comments.service.ts
@@ -50,10 +50,10 @@ src/
 │   ├── decorators/current-user.decorator.ts
 │   └── shared.module.ts
 │
-├── app.module.ts                # Root module (imports des 6 modules)
-└── main.ts                      # Bootstrap — ValidationPipe global, port 3007
+├── app.module.ts                # Root module (imports the 6 modules)
+└── main.ts                      # Bootstrap — global ValidationPipe, port 3007
 
-test/                            # 4 suites unitaires (23 tests)
+test/                            # 4 unit test suites (23 tests)
 ├── auth.service.spec.ts
 ├── projects.service.spec.ts
 ├── tasks.service.spec.ts
@@ -62,13 +62,13 @@ test/                            # 4 suites unitaires (23 tests)
 
 ---
 
-## 🧩 Principes du Modular Monolith
+## 🧩 Modular Monolith Principles
 
 ### 1. **Modules > Layers**
-Contrairement à Layered/Clean/Hexagonal qui découpent **techniquement** (controller/service/data), le Modular Monolith découpe **par capacité métier**. Un module `tasks` est un mini-app vertical : il possède son HTTP, sa logique et sa persistance.
+Unlike Layered/Clean/Hexagonal, which split the code **technically** (controller/service/data), the Modular Monolith splits it **by business capability**. A `tasks` module is a vertical mini-app: it owns its HTTP layer, its logic, and its persistence.
 
-### 2. **Chaque module possède son repository**
-Le repository est **privé au module** — pas de repository global partagé :
+### 2. **Each module owns its repository**
+The repository is **private to the module** — there is no shared global repository:
 
 ```typescript
 @Injectable()
@@ -81,8 +81,8 @@ export class ProjectsRepository {
 }
 ```
 
-### 3. **Shared Kernel global**
-`shared/` est déclaré `@Global()` : Prisma + guards + decorators sont injectables partout sans import explicite.
+### 3. **Global Shared Kernel**
+`shared/` is declared `@Global()`: Prisma + guards + decorators are injectable everywhere without an explicit import.
 
 ```typescript
 @Global()
@@ -90,8 +90,8 @@ export class ProjectsRepository {
 export class SharedModule {}
 ```
 
-### 4. **Communication inter-modules explicite (DI)**
-L'unique lien inter-module est **`AuthModule` → `UsersModule`**, via le système de modules NestJS (pas d'événement, pas d'accès direct à la DB d'un autre module) :
+### 4. **Explicit inter-module communication (DI)**
+The only inter-module dependency is **`AuthModule` → `UsersModule`**, through the NestJS module system (no events, no direct access to another module's DB):
 
 ```typescript
 @Module({
@@ -102,41 +102,41 @@ L'unique lien inter-module est **`AuthModule` → `UsersModule`**, via le systè
 export class AuthModule {}
 ```
 
-`UsersModule` reste **interne** (aucun controller) et n'expose que son `UsersService` :
+`UsersModule` stays **internal** (no controller) and exposes only its `UsersService` as its public API:
 
 ```typescript
 @Module({ providers: [UsersRepository, UsersService], exports: [UsersService] })
 export class UsersModule {}
 ```
 
-### 5. **Base de données unique partagée**
-Tous les modules partagent le même schéma Prisma (`prisma/schema.prisma`, PostgreSQL) et le même historique de migrations : transactions ACID natives entre modules, mais migrations coordonnées.
+### 5. **Single shared database**
+All modules share the same Prisma schema (`prisma/schema.prisma`, PostgreSQL) and the same migration history: native ACID transactions across modules, but coordinated migrations.
 
 ---
 
 ## 📊 Metrics
 
-| Métrique | Valeur |
+| Metric | Value |
 |----------|--------|
-| **Fichiers (src)** | 32 |
-| **Lignes de code (src)** | ~675 LOC |
-| **Modules métier** | 5 (auth, users, projects, tasks, comments) |
-| **Shared kernel** | 4 fichiers (prisma, guard, decorator, module) |
-| **Repository par module** | 4 (users, projects, tasks, comments) |
+| **Files (src)** | 32 |
+| **Lines of code (src)** | ~675 LOC |
+| **Business modules** | 5 (auth, users, projects, tasks, comments) |
+| **Shared kernel** | 4 files (prisma, guard, decorator, module) |
+| **Repository per module** | 4 (users, projects, tasks, comments) |
 | **Tests** | **23** (auth 6, comments 6, projects 5, tasks 6) |
 | **LOC / feature** | ~130 |
 | **Port** | 3007 |
-| **Dépendances** | NestJS (common/core/jwt/passport) + Prisma + bcrypt — **aucun event bus** |
+| **Dependencies** | NestJS (common/core/jwt/passport) + Prisma + bcrypt — **no event bus** |
 
 ---
 
 ## ⚡ Quick Start
 
 ```bash
-# Dépendances
+# Dependencies
 npm install
 
-# Client Prisma + migrations
+# Prisma client + migrations
 npm run prisma:generate
 npm run prisma:migrate
 
@@ -146,7 +146,7 @@ npm run build
 # Tests (23)
 npm test
 
-# Serveur (port 3007)
+# Server (port 3007)
 npm run start
 ```
 
@@ -154,7 +154,7 @@ npm run start
 
 ## 🧪 Testing Strategy
 
-`jest` + `ts-jest`, une suite par module, exécutée contre le **repository mocké** :
+`jest` + `ts-jest`, one suite per module, run against a **mocked repository**:
 
 ```typescript
 const makeRepository = () => ({
@@ -164,19 +164,19 @@ const makeRepository = () => ({
   update: jest.fn(),
 });
 
-// ProjectsService n'a qu'un seul collaborateur : la surface de mock est minuscule.
+// ProjectsService has only one collaborator: the mock surface is tiny.
 const service = new ProjectsService(repository as unknown as ProjectsRepository);
 ```
 
-| Suite | Tests | Couvre |
+| Suite | Tests | Covers |
 |-------|-------|--------|
-| `auth.service.spec.ts` | 6 | signup (conflit email), signin (mauvais mot de passe), getMe, hashage |
-| `projects.service.spec.ts` | 5 | listing par user, création, ownership (404 / 403) |
-| `tasks.service.spec.ts` | 6 | listing par projet, création, complétion, suppression |
-| `comments.service.spec.ts` | 6 | listing par tâche, création et suppression |
+| `auth.service.spec.ts` | 6 | signup (email conflict), signin (wrong password), getMe, hashing |
+| `projects.service.spec.ts` | 5 | listing by user, creation, ownership (404 / 403) |
+| `tasks.service.spec.ts` | 6 | listing by project, creation, completion, deletion |
+| `comments.service.spec.ts` | 6 | listing by task, creation and deletion |
 | **Total** | **23** | |
 
-**Philosophie** : le service détient les règles (ownership, not-found) et n'a que son repository comme dépendance → on teste le comportement sans toucher Prisma. La surface de mock reste faible (un objet de 4 méthodes), ce qui est précisément l'intérêt du découpage par module.
+**Philosophy**: the service holds the rules (ownership, not-found) and has only its repository as a dependency → behavior can be tested without touching Prisma. The mock surface stays small (an object with 4 methods), which is precisely the point of splitting by module.
 
 ---
 
@@ -184,80 +184,80 @@ const service = new ProjectsService(repository as unknown as ProjectsRepository)
 
 | Aspect | Layered (#1) | Clean (#2) | Hexagonal (#3) | DDD (#5) | **Modular Monolith (#7)** |
 |--------|--------------|------------|----------------|----------|---------------------------|
-| **Axe de découpage** | Couches techniques | Couches | Ports/Adapters | Bounded Contexts | **Modules métier** |
-| **Ownership du repository** | Global | Port + adapter | Port + adapter | Par context | **Par module** |
-| **Ids typés** | ❌ `string` | ❌ `string` | ❌ `string` | ✅ VOs | ❌ primitives |
-| **Domain events** | ❌ | ❌ | ❌ | ✅ | ❌ (DI explicite) |
+| **Partitioning axis** | Technical layers | Layers | Ports/Adapters | Bounded Contexts | **Business modules** |
+| **Repository ownership** | Global | Port + adapter | Port + adapter | Per context | **Per module** |
+| **Typed ids** | ❌ `string` | ❌ `string` | ❌ `string` | ✅ VOs | ❌ primitives |
+| **Domain events** | ❌ | ❌ | ❌ | ✅ | ❌ (explicit DI) |
 | **LOC / feature** | ~100 | ~167 | ~167 | ~250 | **~130** |
-| **Fichiers** | 26 | 53 | 61 | 78 | **32** |
+| **Files** | 26 | 53 | 61 | 78 | **32** |
 | **Tests** | 28 | 14 | 17 | 24 | **23** |
-| **Migration microservices** | ❌ | ⚠️ | ⚠️ | ✅ | ✅ **extraction directe** |
-| **Complexité** | Faible | Moyenne | Moyenne | Élevée | **Faible-Moyenne** |
+| **Microservices migration** | ❌ | ⚠️ | ⚠️ | ✅ | ✅ **direct extraction** |
+| **Complexity** | Low | Medium | Medium | High | **Low-Medium** |
 
-> **À noter** : DDD et Modular Monolith découpent tous deux *par le métier*, mais différemment — DDD isole des **Bounded Contexts** avec un modèle riche (Aggregates, VOs, events), le Modular Monolith isole des **modules** avec un modèle anémique classique mais une frontière de déploiement prête pour l'extraction.
+> **Note**: DDD and the Modular Monolith both split *by business domain*, but in different ways — DDD isolates **Bounded Contexts** with a rich model (Aggregates, VOs, events), while the Modular Monolith isolates **modules** with a classic anemic model but a deployment boundary that is ready for extraction.
 
 ---
 
 ## ✅ Pros
 
-1. **Meilleur ratio valeur/complexité** : ~130 LOC/feature pour des frontières de module strictes
-2. **Opérations simples** : un seul déployable, pas de réseau, pas de sagas distribuées
-3. **Frontières qui préparent le futur** : chaque module peut devenir un microservice (les dépendances sont déjà explicites)
-4. **Transactions ACID** inter-modules natives (DB unique)
-5. **Latence minimale** : communication in-process (DI), pas de HTTP/gRPC interne
-6. **Testabilité** : surface de mock faible (un repository par service) — 23 tests sans Prisma
-7. **DX** : debug, tests d'intégration et dev local triviaux
+1. **Best value/complexity ratio**: ~130 LOC/feature for strict module boundaries
+2. **Simple operations**: a single deployable unit, no network, no distributed sagas
+3. **Boundaries that prepare for the future**: each module can become a microservice (dependencies are already explicit)
+4. **Native ACID transactions** across modules (single DB)
+5. **Minimal latency**: in-process communication (DI), no internal HTTP/gRPC
+6. **Testability**: small mock surface (one repository per service) — 23 tests without Prisma
+7. **DX**: debugging, integration tests, and local development are trivial
 
 ---
 
 ## ❌ Cons
 
-1. **Couplage de déploiement** : tout scale ensemble (pas de scaling par module)
-2. **Schéma DB partagé** : migrations à coordonner entre modules
-3. **Discipline requise** : rien n'empêche *techniquement* un import cross-module sauvage si l'équipe ne fait pas attention
-4. **Scaling horizontal grossier** : on réplique l'app entière
-5. **Pas de modèle riche** : contrairement à DDD, les entités restent anémiques (pas de VOs/events)
-6. **Risque de dérive** : sans garde-fous (lint de frontières), un modular monolith peut redevenir un big ball of mud
+1. **Deployment coupling**: everything scales together (no per-module scaling)
+2. **Shared DB schema**: migrations must be coordinated across modules
+3. **Discipline required**: nothing *technically* prevents a rogue cross-module import if the team is not careful
+4. **Coarse horizontal scaling**: the entire app is replicated
+5. **No rich model**: unlike DDD, entities remain anemic (no VOs/events)
+6. **Risk of drift**: without guardrails (boundary linting), a modular monolith can turn back into a big ball of mud
 
 ---
 
 ## 📖 When to Use a Modular Monolith
 
-### ✅ **USE** si :
-- Domaine multi-capacités (auth, projets, tâches, …) sur une équipe **unique à taille moyenne**
-- Besoin de **frontières claires** mais pas encore de scaling indépendant
-- Candidat à une extraction future en microservices (Monolith First)
-- Time-to-market important (plus rapide que microservices, mieux structuré que le Layered)
-- Petite équipe sans équipe SRE dédiée
+### ✅ **USE** if:
+- Multi-capability domain (auth, projects, tasks, …) with a **single, medium-sized team**
+- Need for **clear boundaries** but not yet for independent scaling
+- Candidate for a future extraction into microservices (Monolith First)
+- Time-to-market matters (faster than microservices, better structured than Layered)
+- Small team without a dedicated SRE team
 
-### ❌ **AVOID** si :
-- Besoin de scaling **indépendant par module** (pic de charge sur un seul domaine)
-- Équipes multiples autonomes qui déploient réellement à des rythmes différents → microservices
-- Stack polyglotte par domaine (chaque module a besoin d'un langage/framework différent)
-- Domaine trivial → un Layered simple suffit
+### ❌ **AVOID** if:
+- Need for **independent scaling per module** (load spike on a single domain)
+- Multiple autonomous teams that genuinely deploy at different cadences → microservices
+- Polyglot stack per domain (each module needs a different language/framework)
+- Trivial domain → a simple Layered architecture is enough
 
 ---
 
 ## 📚 References
 
-- **Martin Fowler** : [MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html)
-- **Shopify** : [Shopify's Modular Monolith Journey](https://shopify.engineering/shopify-monolith)
-- **NestJS** : [Modules](https://docs.nestjs.com/modules)
-- **Kamil Grzybek** : *Modular Monolith with DDD* (référence du pattern)
+- **Martin Fowler**: [MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html)
+- **Shopify**: [Shopify's Modular Monolith Journey](https://shopify.engineering/shopify-monolith)
+- **NestJS**: [Modules](https://docs.nestjs.com/modules)
+- **Kamil Grzybek**: *Modular Monolith with DDD* (the reference for the pattern)
 
 ---
 
 ## 🎓 Key Learnings
 
-1. **Découper par métier, pas par technique** : le module `tasks` contient *tout* ce dont "task" a besoin — HTTP, logique, persistance
-2. **Le repository appartient au module** : pas de repository global partagé ; chaque module pose ses propres requêtes
-3. **Communication explicite** : un seul lien inter-module (Auth → Users) via DI — visible et traçable
-4. **Global shared kernel** : Prisma/guards injectables partout via `@Global()`, sans polluer les signatures d'import
-5. **La frontière = la future couture du microservice** : extraire un module devient mécanique (in-process → HTTP)
-6. **Le meilleur compromis pragmatique** de la série : ~130 LOC/feature pour des garanties structurelles là où Layered en donne ~100 sans frontières et DDD en demande ~250
+1. **Split by business capability, not by technical concern**: the `tasks` module contains *everything* "task" needs — HTTP, logic, persistence
+2. **The repository belongs to the module**: no shared global repository; each module defines its own queries
+3. **Explicit communication**: a single inter-module link (Auth → Users) via DI — visible and traceable
+4. **Global shared kernel**: Prisma/guards injectable everywhere via `@Global()`, without polluting import signatures
+5. **The boundary = the future microservice seam**: extracting a module becomes mechanical (in-process → HTTP)
+6. **The best pragmatic trade-off** of the series: ~130 LOC/feature for structural guarantees where Layered gives ~100 without boundaries and DDD demands ~250
 
 ---
 
-**Next Steps** :
-- Voir le [comparison matrix](../../docs/comparison-matrix.md) pour le verdict global sur les 7 backends + 4 fronts.
-- Piste d'amélioration : ajouter un test de frontière (ESLint `no-cross-module-import`) pour empêcher mécaniquement les imports cross-module non déclarés.
+**Next Steps**:
+- See the [comparison matrix](../../docs/comparison-matrix.md) for the overall verdict across the 7 backends + 4 frontends.
+- Improvement idea: add a boundary test (ESLint `no-cross-module-import`) to mechanically prevent undeclared cross-module imports.

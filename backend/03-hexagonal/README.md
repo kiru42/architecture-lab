@@ -1,18 +1,18 @@
 # Backend #3 — Hexagonal Architecture (Ports & Adapters)
 
-Architecture hexagonale avec séparation explicite des **ports** (interfaces) et **adapters** (implémentations).
+Hexagonal architecture with an explicit separation between **ports** (interfaces) and **adapters** (implementations).
 
 ## 🏗️ Structure
 
 ```
 src/
-├── domain/              # Entités métier (pure business logic)
+├── domain/              # Business entities (pure business logic)
 │   └── entities/
 │       ├── user.entity.ts
 │       ├── project.entity.ts
 │       └── task.entity.ts
 │
-├── ports/               # Interfaces (contrats)
+├── ports/               # Interfaces (contracts)
 │   ├── in/             # Driving ports (use cases)
 │   │   ├── auth.port.ts
 │   │   ├── project.port.ts
@@ -32,7 +32,7 @@ src/
 │       ├── assign-task.use-case.ts
 │       └── ...
 │
-├── adapters/            # Implémentations concrètes
+├── adapters/            # Concrete implementations
 │   ├── in/             # Primary adapters (HTTP, CLI, WS...)
 │   │   └── http/
 │   │       ├── auth/
@@ -49,29 +49,29 @@ src/
     └── infrastructure/
 ```
 
-## 🔑 Concepts clés
+## 🔑 Key Concepts
 
 ### Ports vs Adapters
 
 **Ports IN (Driving):**
-- Définissent ce que l'application **expose** au monde extérieur
-- Exemple: `RegisterUserPort`, `CreateProjectPort`
-- Implémentés par les **use cases** (application layer)
+- Define what the application **exposes** to the outside world
+- Example: `RegisterUserPort`, `CreateProjectPort`
+- Implemented by the **use cases** (application layer)
 
 **Ports OUT (Driven):**
-- Définissent ce que l'application **attend** de l'infrastructure
-- Exemple: `UserRepositoryPort`, `HashServicePort`
-- Implémentés par les **adapters OUT** (Prisma, bcrypt, JWT...)
+- Define what the application **expects** from the infrastructure
+- Example: `UserRepositoryPort`, `HashServicePort`
+- Implemented by the **OUT adapters** (Prisma, bcrypt, JWT...)
 
 **Adapters IN (Primary):**
-- Appellent l'application via les ports IN
-- Exemple: `AuthController` → appelle `RegisterUserPort`
+- Call the application through the IN ports
+- Example: `AuthController` → calls `RegisterUserPort`
 
 **Adapters OUT (Secondary):**
-- Implémentent les ports OUT
-- Exemple: `PrismaUserRepository` → implémente `UserRepositoryPort`
+- Implement the OUT ports
+- Example: `PrismaUserRepository` → implements `UserRepositoryPort`
 
-### Flow de données
+### Data Flow
 
 ```
 HTTP Request
@@ -80,7 +80,7 @@ AuthController (Adapter IN)
     ↓
 RegisterUserPort (Port IN interface)
     ↓
-RegisterUserUseCase (implémente Port IN, utilise Ports OUT)
+RegisterUserUseCase (implements Port IN, uses Ports OUT)
     ↓
 UserRepositoryPort (Port OUT interface)
     ↓
@@ -89,26 +89,26 @@ PrismaUserRepository (Adapter OUT)
 Database
 ```
 
-## 📊 Comparaison avec les autres backends
+## 📊 Comparison with the Other Backends
 
-| Critère | Layered | Clean | **Hexagonal** |
+| Criterion | Layered | Clean | **Hexagonal** |
 |---------|---------|-------|---------------|
-| **Séparation ports/adapters** | ❌ Non | ⚠️ Implicite | ✅ **Explicite (IN/OUT)** |
-| **Testabilité** | Moyenne (20+ mocks) | Excellente (4 mocks) | **Excellente (4 mocks)** |
-| **Business logic** | Services (couplée DB) | Entities | **Entities** |
-| **Use cases** | ❌ Services mixés | ✅ Use cases dédiés | ✅ **Use cases dédiés** |
-| **Repository interfaces** | ❌ Non | Domain layer | **Ports OUT** |
-| **Swap Prisma → MongoDB** | ❌ Hard | ✅ Easy | ✅ **Easy (nouveau adapter OUT)** |
-| **Complexité structure** | 🟢 Simple | 🟡 Moyenne | 🟡 **Moyenne** |
-| **Boilerplate** | 🟢 Faible | 🟡 Moyen | 🟡 **Moyen** |
+| **Ports/adapters separation** | ❌ No | ⚠️ Implicit | ✅ **Explicit (IN/OUT)** |
+| **Testability** | Average (20+ mocks) | Excellent (4 mocks) | **Excellent (4 mocks)** |
+| **Business logic** | Services (coupled to the DB) | Entities | **Entities** |
+| **Use cases** | ❌ Mixed-up services | ✅ Dedicated use cases | ✅ **Dedicated use cases** |
+| **Repository interfaces** | ❌ No | Domain layer | **Ports OUT** |
+| **Swap Prisma → MongoDB** | ❌ Hard | ✅ Easy | ✅ **Easy (new OUT adapter)** |
+| **Structural complexity** | 🟢 Simple | 🟡 Medium | 🟡 **Medium** |
+| **Boilerplate** | 🟢 Low | 🟡 Medium | 🟡 **Medium** |
 
-### Différence clé : Hexagonal vs Clean
+### Key Difference: Hexagonal vs Clean
 
 **Hexagonal:**
 ```
 ports/in/        → Driving ports (use cases interfaces)
 ports/out/       → Driven ports (repositories, services)
-application/     → Use cases (implémentent ports IN)
+application/     → Use cases (implement IN ports)
 adapters/in/     → Primary adapters (HTTP, CLI...)
 adapters/out/    → Secondary adapters (DB, external APIs)
 ```
@@ -116,12 +116,12 @@ adapters/out/    → Secondary adapters (DB, external APIs)
 **Clean:**
 ```
 domain/repositories/     → Repository interfaces (= ports OUT)
-application/use-cases/   → Use cases (= ports IN implémentés)
+application/use-cases/   → Use cases (= implemented IN ports)
 infrastructure/          → Adapters OUT (Prisma)
 presentation/            → Adapters IN (controllers)
 ```
 
-**Verdict:** Structurellement identiques. Hexagonal nomme explicitement les concepts (ports IN/OUT), Clean les laisse implicites.
+**Verdict:** Structurally identical. Hexagonal names the concepts explicitly (IN/OUT ports), while Clean leaves them implicit.
 
 ## 🧪 Tests
 
@@ -129,15 +129,15 @@ presentation/            → Adapters IN (controllers)
 npm test
 ```
 
-**Résultats:** 7/7 tests passing
+**Results:** 7/7 tests passing
 
-**Couverture:**
+**Coverage:**
 - Domain entities: `Project.isOwnedBy()`, `Project.updateInfo()`
 - Use cases: `CreateProjectUseCase` (happy path + conflict)
 
-**Avantage testabilité:**
-- Clean/Hexagonal: Mock 4 méthodes repository
-- Layered: Mock 20+ méthodes Prisma
+**Testability advantage:**
+- Clean/Hexagonal: Mock 4 repository methods
+- Layered: Mock 20+ Prisma methods
 
 ## 🚀 Run
 
@@ -163,32 +163,32 @@ Port: `3003`
 
 ## 📝 Observations
 
-### ✅ Forces
+### ✅ Strengths
 
-1. **Nommage explicite:** Les concepts de ports IN/OUT rendent le flow plus clair
-2. **Symétrie:** `adapters/in` et `adapters/out` sont symétriques
-3. **Testabilité:** Identique à Clean (mock 4 méthodes vs 20+)
-4. **Swap facile:** Nouveau adapter OUT = nouvelle implémentation de port
+1. **Explicit naming:** The IN/OUT port concepts make the flow clearer
+2. **Symmetry:** `adapters/in` and `adapters/out` are symmetrical
+3. **Testability:** Identical to Clean (mock 4 methods vs 20+)
+4. **Easy swap:** New OUT adapter = new port implementation
 
-### ⚠️ Faiblesses
+### ⚠️ Weaknesses
 
-1. **Vocabulaire théorique:** "Primary/Secondary adapters" moins intuitif que "Presentation/Infrastructure"
-2. **Même structure que Clean:** En pratique, c'est du Clean avec un renommage
-3. **Boilerplate:** Autant que Clean (~167 LOC/feature vs 100 pour Layered)
+1. **Theoretical vocabulary:** "Primary/Secondary adapters" is less intuitive than "Presentation/Infrastructure"
+2. **Same structure as Clean:** In practice, it is Clean with a renaming
+3. **Boilerplate:** As much as Clean (~167 LOC/feature vs 100 for Layered)
 
-### 🤔 Question centrale
+### 🤔 Central Question
 
-**Hexagonal et Clean sont-ils vraiment différents ?**
+**Are Hexagonal and Clean really different?**
 
-Non. En NestJS, les deux architectures aboutissent à la même structure :
+No. In NestJS, both architectures end up with the same structure:
 - Ports IN = Use case interfaces
 - Ports OUT = Repository interfaces
 - Application layer = Use cases
 - Adapters IN = Controllers
 - Adapters OUT = Prisma repositories
 
-La différence est **cosmétique** : Hexagonal nomme explicitement les ports, Clean les laisse implicites mais ils existent quand même.
+The difference is **cosmetic**: Hexagonal names the ports explicitly, while Clean leaves them implicit, but they exist all the same.
 
 ---
 
-**Conclusion:** Architecture identique à Clean avec vocabulaire "ports & adapters" explicite. Si vous aimez le vocabulaire Alistair Cockburn, prenez Hexagonal. Si vous préférez Uncle Bob, prenez Clean. Techniquement, c'est la même chose.
+**Conclusion:** Architecture identical to Clean, with explicit "ports & adapters" vocabulary. If you like Alistair Cockburn's vocabulary, choose Hexagonal. If you prefer Uncle Bob's, choose Clean. Technically, it is the same thing.

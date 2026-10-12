@@ -7,6 +7,8 @@
 [![Implementations](https://img.shields.io/badge/Implementations-11%2F11-success)](docs/comparison-matrix.md)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
+🇫🇷 [Version française](https://github.com/kiru42/architecture-lab-fr)
+
 > A hands-on comparison of 8+ architectural styles applied to the same reference application.
 
 ## What is this?

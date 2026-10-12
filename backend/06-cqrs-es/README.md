@@ -169,13 +169,13 @@ class UserRegisteredHandler {
 
 ## 📊 Metrics
 
-| Métrique | Valeur |
+| Metric | Value |
 |----------|--------|
 | **Total LOC** | ~1,100 |
 | **Write Side LOC** | ~350 |
 | **Read Side LOC** | ~250 |
 | **Event Store LOC** | ~150 |
-| **Fichiers** | 33 |
+| **Files** | 33 |
 | **Tests** | 9 (event store, aggregates, projections) |
 | **Commands** | 2 (RegisterUser, LoginUser) |
 | **Queries** | 2 (GetUsers, GetUserById) |
@@ -272,7 +272,7 @@ npm test test/read-side
 
 ## 🎯 CQRS + Event Sourcing Key Patterns
 
-| Pattern | Implémentation |
+| Pattern | Implementation |
 |---------|----------------|
 | **Event Store** | Append-only log with optimistic locking |
 | **Aggregate (Event-Sourced)** | State reconstituted by replaying events |

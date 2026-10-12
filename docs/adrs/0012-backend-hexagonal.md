@@ -6,13 +6,13 @@
 
 ## Context
 
-Après avoir implémenté Backend #1 (Layered) et Backend #2 (Clean Architecture), nous explorons **Hexagonal Architecture** (aka Ports & Adapters, Alistair Cockburn 2005).
+After implementing Backend #1 (Layered) and Backend #2 (Clean Architecture), we are exploring **Hexagonal Architecture** (aka Ports & Adapters, Alistair Cockburn 2005).
 
-**Question centrale:** Hexagonal et Clean sont-ils vraiment différents en pratique, ou juste un renommage de concepts ?
+**Central question:** Are Hexagonal and Clean really different in practice, or just a renaming of concepts?
 
 ## Decision
 
-Implémenter TaskFlow avec architecture hexagonale "pure" :
+Implement TaskFlow with a "pure" hexagonal architecture:
 
 ```
 src/
@@ -26,20 +26,20 @@ src/
     └── out/            # Secondary adapters (Prisma, bcrypt...)
 ```
 
-### Vocabulaire Hexagonal
+### Hexagonal Vocabulary
 
-| Concept | Définition | Équivalent Clean |
+| Concept | Definition | Clean Equivalent |
 |---------|-----------|------------------|
-| **Port IN (Driving)** | Interface exposée par l'application | Use case interface |
-| **Port OUT (Driven)** | Interface requise par l'application | Repository interface |
-| **Adapter IN (Primary)** | Appelle l'application | Controller (Presentation) |
-| **Adapter OUT (Secondary)** | Implémente un port OUT | Repository impl (Infrastructure) |
+| **Port IN (Driving)** | Interface exposed by the application | Use case interface |
+| **Port OUT (Driven)** | Interface required by the application | Repository interface |
+| **Adapter IN (Primary)** | Calls the application | Controller (Presentation) |
+| **Adapter OUT (Secondary)** | Implements a port OUT | Repository impl (Infrastructure) |
 
 ## Implementation
 
 ### 1. Domain Layer
 
-**Identique à Clean Architecture:**
+**Identical to Clean Architecture:**
 
 ```typescript
 // domain/entities/project.entity.ts
@@ -56,11 +56,11 @@ export class Project {
 }
 ```
 
-**Observation:** Aucune différence vs Clean.
+**Observation:** No difference vs Clean.
 
 ### 2. Ports IN (Driving)
 
-**Nouveau concept explicite:**
+**New explicit concept:**
 
 ```typescript
 // ports/in/project.port.ts
@@ -74,7 +74,7 @@ export interface CreateProjectPort {
 }
 ```
 
-**En Clean, on aurait juste:**
+**In Clean, we would just have:**
 ```typescript
 // application/use-cases/create-project.use-case.ts
 export class CreateProjectUseCase {
@@ -82,11 +82,11 @@ export class CreateProjectUseCase {
 }
 ```
 
-**Différence:** Hexagonal force une **interface explicite** pour chaque use case. Clean peut les définir ou non (optionnel).
+**Difference:** Hexagonal forces an **explicit interface** for each use case. Clean may define them or not (optional).
 
 ### 3. Ports OUT (Driven)
 
-**Identique à Clean:**
+**Identical to Clean:**
 
 ```typescript
 // ports/out/project-repository.port.ts
@@ -96,7 +96,7 @@ export interface ProjectRepositoryPort {
 }
 ```
 
-**En Clean:**
+**In Clean:**
 ```typescript
 // domain/repositories/project.repository.ts
 export interface IProjectRepository {
@@ -105,7 +105,7 @@ export interface IProjectRepository {
 }
 ```
 
-**Différence:** Nommage (`Port` vs `IRepository`), localisation (`ports/out` vs `domain/repositories`). **Sémantiquement identiques.**
+**Difference:** Naming (`Port` vs `IRepository`), location (`ports/out` vs `domain/repositories`). **Semantically identical.**
 
 ### 4. Application Layer (Use Cases)
 
@@ -139,7 +139,7 @@ export class CreateProjectUseCase {
 }
 ```
 
-**Différence:** Hexagonal force `implements CreateProjectPort`. Clean peut le faire ou non (optionnel). **Logique identique.**
+**Difference:** Hexagonal forces `implements CreateProjectPort`. Clean may do it or not (optional). **Identical logic.**
 
 ### 5. Adapters IN (Primary)
 
@@ -165,11 +165,11 @@ export class ProjectsController {
 }
 ```
 
-**Différence:** Hexagonal injecte l'**interface** (`CreateProjectPort`), Clean injecte la **classe** (`CreateProjectUseCase`). En NestJS, les deux fonctionnent via DI.
+**Difference:** Hexagonal injects the **interface** (`CreateProjectPort`), Clean injects the **class** (`CreateProjectUseCase`). In NestJS, both work via DI.
 
 ### 6. Adapters OUT (Secondary)
 
-**Identique à Clean:**
+**Identical to Clean:**
 
 ```typescript
 // adapters/out/persistence/prisma/project-repository.adapter.ts
@@ -181,26 +181,26 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
 }
 ```
 
-**Différence:** Aucune. Même code que Clean Infrastructure layer.
+**Difference:** None. Same code as the Clean Infrastructure layer.
 
 ## Consequences
 
-### ✅ Avantages
+### ✅ Advantages
 
-1. **Vocabulaire standardisé:** "Ports & Adapters" est un langage commun reconnu
-2. **Explicite:** Séparer `ports/in` et `ports/out` rend le flow plus clair
-3. **Testabilité:** Identique à Clean (mock 4 méthodes vs 20+ en Layered)
-4. **Swap facile:** Nouveau Adapter OUT = nouvelle implémentation de Port OUT
+1. **Standardized vocabulary:** "Ports & Adapters" is a widely recognized common language
+2. **Explicit:** Separating `ports/in` and `ports/out` makes the flow clearer
+3. **Testability:** Identical to Clean (mock 4 methods vs 20+ in Layered)
+4. **Easy swapping:** A new Adapter OUT = a new implementation of a Port OUT
 
-### ❌ Inconvénients
+### ❌ Disadvantages
 
-1. **Vocabulaire moins intuitif:** "Primary/Secondary adapters" vs "Presentation/Infrastructure"
-2. **Redondance:** Forcer une interface pour chaque use case = boilerplate
-3. **Aucune différence technique vs Clean:** C'est du Clean avec renommage
+1. **Less intuitive vocabulary:** "Primary/Secondary adapters" vs "Presentation/Infrastructure"
+2. **Redundancy:** Forcing an interface for every use case = boilerplate
+3. **No technical difference vs Clean:** It's Clean with renaming
 
-### 📊 Métriques
+### 📊 Metrics
 
-| Métrique | Backend #1 (Layered) | Backend #2 (Clean) | **Backend #3 (Hexagonal)** |
+| Metric | Backend #1 (Layered) | Backend #2 (Clean) | **Backend #3 (Hexagonal)** |
 |----------|---------------------|-------------------|---------------------------|
 | LOC/feature | ~100 | ~167 | **~167** |
 | Tests passing | 28/28 | 14/14 | **7/7** |
@@ -208,49 +208,49 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
 | First feature time | 1.5h | 2.5h | **2.5h** |
 | Build time | 8s | 10s | **10s** |
 
-**Observation:** Métriques **identiques** à Clean Architecture.
+**Observation:** **Identical** metrics to Clean Architecture.
 
 ### 🤔 Hexagonal vs Clean — Verdict
 
-**Structurellement identiques.** Mapping complet :
+**Structurally identical.** Full mapping:
 
 | Hexagonal | Clean Architecture |
 |-----------|-------------------|
 | `domain/` | `domain/` |
-| `ports/in/` (interfaces) | Use case interfaces (optionnelles) |
+| `ports/in/` (interfaces) | Use case interfaces (optional) |
 | `ports/out/` (interfaces) | `domain/repositories/` |
 | `application/` (use cases) | `application/use-cases/` |
 | `adapters/in/` | `presentation/` |
 | `adapters/out/` | `infrastructure/` |
 
-**Différences cosmétiques:**
-1. Hexagonal force des interfaces pour use cases (ports IN)
-2. Hexagonal nomme explicitement "Ports" et "Adapters"
-3. Hexagonal utilise le vocabulaire Cockburn ("Primary/Secondary")
+**Cosmetic differences:**
+1. Hexagonal forces interfaces for use cases (ports IN)
+2. Hexagonal explicitly names "Ports" and "Adapters"
+3. Hexagonal uses Cockburn's vocabulary ("Primary/Secondary")
 
-**En pratique:** Si vous implémentez Clean avec des interfaces explicites pour vos use cases, vous avez déjà du Hexagonal.
+**In practice:** If you implement Clean with explicit interfaces for your use cases, you already have Hexagonal.
 
-### 🔮 Quand choisir Hexagonal vs Clean ?
+### 🔮 When to choose Hexagonal vs Clean?
 
-**Hexagonal si:**
-- Votre équipe connaît le vocabulaire "Ports & Adapters"
-- Vous voulez forcer des interfaces explicites partout
-- Vous aimez la symétrie `adapters/in` ↔ `adapters/out`
+**Hexagonal if:**
+- Your team knows the "Ports & Adapters" vocabulary
+- You want to force explicit interfaces everywhere
+- You like the `adapters/in` ↔ `adapters/out` symmetry
 
-**Clean si:**
-- Vous préférez le vocabulaire Uncle Bob ("Presentation/Infrastructure")
-- Vous ne voulez pas de boilerplate d'interfaces pour use cases simples
-- Vous voulez plus de flexibilité (interfaces optionnelles)
+**Clean if:**
+- You prefer Uncle Bob's vocabulary ("Presentation/Infrastructure")
+- You don't want interface boilerplate for simple use cases
+- You want more flexibility (optional interfaces)
 
-**En réalité:** Les deux sont équivalents. Choisissez selon le vocabulaire que votre équipe préfère.
+**In reality:** The two are equivalent. Choose based on the vocabulary your team prefers.
 
 ## Lessons Learned
 
-1. **Hexagonal ≈ Clean avec renommage:** La structure est identique, seuls les noms changent
-2. **Interfaces de use cases:** Hexagonal les force, Clean les rend optionnelles. Dans les deux cas, c'est du boilerplate pour des use cases simples.
-3. **Ports OUT = Repository interfaces:** Même concept, même localisation (ou presque)
-4. **Testabilité identique:** Clean et Hexagonal mockent 4 méthodes, Layered 20+
-5. **Symétrie adapters IN/OUT:** Plus claire en Hexagonal, mais Clean peut faire pareil avec "Presentation/Infrastructure"
+1. **Hexagonal ≈ Clean with renaming:** The structure is identical, only the names change
+2. **Use case interfaces:** Hexagonal forces them, Clean makes them optional. In both cases, it's boilerplate for simple use cases.
+3. **Ports OUT = Repository interfaces:** Same concept, same location (or nearly)
+4. **Identical testability:** Clean and Hexagonal mock 4 methods, Layered 20+
+5. **Adapters IN/OUT symmetry:** Clearer in Hexagonal, but Clean can do the same with "Presentation/Infrastructure"
 
 ## Related
 
@@ -259,18 +259,18 @@ export class PrismaProjectRepository implements ProjectRepositoryPort {
 
 ## Notes
 
-**Question posée dans ADR-0011:** "Does Hexagonal collapse into Clean in practice?"
+**Question raised in ADR-0011:** "Does Hexagonal collapse into Clean in practice?"
 
-**Réponse:** **Oui.** En NestJS (ou tout framework avec DI), Hexagonal et Clean sont structurellement identiques. La différence est cosmétique :
-- Hexagonal nomme explicitement "Ports IN/OUT"
-- Clean laisse implicites (mais ils existent quand même)
+**Answer:** **Yes.** In NestJS (or any framework with DI), Hexagonal and Clean are structurally identical. The difference is cosmetic:
+- Hexagonal explicitly names "Ports IN/OUT"
+- Clean leaves them implicit (but they exist all the same)
 
-Si vous implémentez Clean avec :
-1. Des interfaces pour vos use cases → vous avez des Ports IN
-2. Des interfaces pour vos repositories → vous avez des Ports OUT
+If you implement Clean with:
+1. Interfaces for your use cases → you have Ports IN
+2. Interfaces for your repositories → you have Ports OUT
 
-Donc Clean **est** Hexagonal, juste avec un vocabulaire différent.
+So Clean **is** Hexagonal, just with a different vocabulary.
 
 ---
 
-**Conclusion finale:** Architecture hexagonale = Clean Architecture avec vocabulaire "Ports & Adapters" explicite. Techniquement équivalentes. Choisissez selon la culture de votre équipe.
+**Final conclusion:** Hexagonal architecture = Clean Architecture with explicit "Ports & Adapters" vocabulary. Technically equivalent. Choose based on your team's culture.
